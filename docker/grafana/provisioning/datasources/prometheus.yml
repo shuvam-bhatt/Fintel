@@ -1,0 +1,12 @@
+# Fintel — Grafana Datasource Provisioning
+# Auto-configures Prometheus as the default datasource on first Grafana start
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true

@@ -1,0 +1,79 @@
+[
+  {
+    "metric": "Evidence Traceability Rate",
+    "total_sentences": 10,
+    "grounded_sentences": 10,
+    "traceability_rate_percent": 100.0,
+    "target": "> 95.0%",
+    "passed": true
+  },
+  {
+    "metric": "Investigation Time Saved",
+    "manual_baseline_minutes": 45.0,
+    "ai_pipeline_seconds": 0.08,
+    "time_saved_percent": 100.0,
+    "speedup_factor": "33,750x faster",
+    "target": "> 90.0% reduction",
+    "passed": true
+  },
+  {
+    "metric": "Analyst Edit Retention Rate",
+    "draft_word_count": 44,
+    "retained_word_count": 43,
+    "retention_rate_percent": 97.73,
+    "target": "> 85.0% unedited",
+    "passed": true
+  },
+  {
+    "metric": "Mule-Network Detection Accuracy",
+    "total_scenarios_tested": 4,
+    "total_mule_accounts": 21,
+    "detected_mule_accounts": 21,
+    "detection_recall_percent": 100.0,
+    "scenarios": [
+      {
+        "scenario": "Classic Mule Chain",
+        "expected_accounts": 5,
+        "detected_accounts": 5,
+        "recall_percent": 100.0
+      },
+      {
+        "scenario": "Fan-Out Ring",
+        "expected_accounts": 6,
+        "detected_accounts": 6,
+        "recall_percent": 100.0
+      },
+      {
+        "scenario": "Circular Layering",
+        "expected_accounts": 4,
+        "detected_accounts": 4,
+        "recall_percent": 100.0
+      },
+      {
+        "scenario": "Structuring + Mule Hybrid",
+        "expected_accounts": 6,
+        "detected_accounts": 6,
+        "recall_percent": 100.0
+      }
+    ],
+    "target": "100.0% on known rings",
+    "passed": true
+  },
+  {
+    "metric": "NLP Typology Classification Accuracy",
+    "samples_evaluated": 500,
+    "correct_predictions": 500,
+    "accuracy_percent": 100.0,
+    "target": "> 90.0%",
+    "passed": true
+  },
+  {
+    "metric": "RAG Retrieval Quality",
+    "queries_tested": 5,
+    "precision_at_1_percent": 100.0,
+    "precision_at_3_percent": 100.0,
+    "mean_reciprocal_rank": 1.0,
+    "target": "Precision@1 > 80.0%, MRR > 0.85",
+    "passed": true
+  }
+]

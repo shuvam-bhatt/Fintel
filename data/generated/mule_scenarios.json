@@ -1,0 +1,578 @@
+[
+  {
+    "name": "Classic Mule Chain",
+    "description": "Linear chain of 4 accounts passing $50K through structuring and fee-deducting hops. Source deposits are structured below $10K threshold.",
+    "typology": "mule_network",
+    "expected_detection": "Agent should detect the full chain: Source \u2192 A \u2192 B \u2192 C \u2192 Cash-out. Should flag structuring pattern at Source \u2192 A hop, and rapid movement at subsequent hops.",
+    "num_accounts": 5,
+    "num_transactions": 8,
+    "accounts": [
+      {
+        "id": "MULE-SRC-001",
+        "name": "Dirty Source LLC",
+        "role": "source"
+      },
+      {
+        "id": "MULE-A-001",
+        "name": "Mule Alpha",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-B-001",
+        "name": "Mule Bravo",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-C-001",
+        "name": "Mule Charlie",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-CASH-001",
+        "name": "Cash-out Terminal",
+        "role": "cashout"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "S1-SRC-A-001",
+        "source": "MULE-SRC-001",
+        "dest": "MULE-A-001",
+        "amount": 9800.0,
+        "timestamp": "2024-06-10T09:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #1: $9,800.00 from Dirty Source LLC to Mule Alpha"
+      },
+      {
+        "id": "S1-SRC-A-002",
+        "source": "MULE-SRC-001",
+        "dest": "MULE-A-001",
+        "amount": 9750.0,
+        "timestamp": "2024-06-10T09:20:00",
+        "typology": "structuring",
+        "description": "Structured deposit #2: $9,750.00 from Dirty Source LLC to Mule Alpha"
+      },
+      {
+        "id": "S1-SRC-A-003",
+        "source": "MULE-SRC-001",
+        "dest": "MULE-A-001",
+        "amount": 9850.0,
+        "timestamp": "2024-06-10T09:40:00",
+        "typology": "structuring",
+        "description": "Structured deposit #3: $9,850.00 from Dirty Source LLC to Mule Alpha"
+      },
+      {
+        "id": "S1-SRC-A-004",
+        "source": "MULE-SRC-001",
+        "dest": "MULE-A-001",
+        "amount": 9700.0,
+        "timestamp": "2024-06-10T10:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #4: $9,700.00 from Dirty Source LLC to Mule Alpha"
+      },
+      {
+        "id": "S1-SRC-A-005",
+        "source": "MULE-SRC-001",
+        "dest": "MULE-A-001",
+        "amount": 9900.0,
+        "timestamp": "2024-06-10T10:20:00",
+        "typology": "structuring",
+        "description": "Structured deposit #5: $9,900.00 from Dirty Source LLC to Mule Alpha"
+      },
+      {
+        "id": "S1-A-B-001",
+        "source": "MULE-A-001",
+        "dest": "MULE-B-001",
+        "amount": 46550.0,
+        "timestamp": "2024-06-10T11:00:00",
+        "typology": "mule_network",
+        "description": "Mule A forwards $46,550.00 to Mule B (kept $2,450.00 fee)"
+      },
+      {
+        "id": "S1-B-C-001",
+        "source": "MULE-B-001",
+        "dest": "MULE-C-001",
+        "amount": 43291.5,
+        "timestamp": "2024-06-10T14:00:00",
+        "typology": "mule_network",
+        "description": "Mule B forwards $43,291.50 to Mule C (kept $3,258.50 fee)"
+      },
+      {
+        "id": "S1-C-CASH-001",
+        "source": "MULE-C-001",
+        "dest": "MULE-CASH-001",
+        "amount": 41126.93,
+        "timestamp": "2024-06-10T17:00:00",
+        "typology": "mule_network",
+        "description": "Mule C cashes out $41,126.93 (kept $2,164.58 fee)"
+      }
+    ]
+  },
+  {
+    "name": "Fan-Out Ring",
+    "description": "Source distributes $45K across 3 mules (fan-out), who each forward to a single Collector that consolidates and moves to an Integration point.",
+    "typology": "mule_network",
+    "expected_detection": "Agent should detect the fan-out pattern from Source to 3 mules, the consolidation at Collector, and the full ring. All 6 accounts should be linked in the entity graph.",
+    "num_accounts": 6,
+    "num_transactions": 7,
+    "accounts": [
+      {
+        "id": "MULE-SRC-002",
+        "name": "Offshore Wire Source",
+        "role": "source"
+      },
+      {
+        "id": "MULE-FA-001",
+        "name": "Fan Mule Alpha",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-FB-001",
+        "name": "Fan Mule Bravo",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-FC-001",
+        "name": "Fan Mule Charlie",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-COLL-001",
+        "name": "Collector Account",
+        "role": "collector"
+      },
+      {
+        "id": "MULE-INT-001",
+        "name": "Integration Business",
+        "role": "cashout"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "S2-SRC-001-001",
+        "source": "MULE-SRC-002",
+        "dest": "MULE-FA-001",
+        "amount": 15000.0,
+        "timestamp": "2024-06-12T10:00:00",
+        "typology": "layering",
+        "description": "Fan-out: $15,000.00 from Offshore Wire Source to Fan Mule Alpha"
+      },
+      {
+        "id": "S2-SRC-001-001",
+        "source": "MULE-SRC-002",
+        "dest": "MULE-FB-001",
+        "amount": 15200.0,
+        "timestamp": "2024-06-12T10:30:00",
+        "typology": "layering",
+        "description": "Fan-out: $15,200.00 from Offshore Wire Source to Fan Mule Bravo"
+      },
+      {
+        "id": "S2-SRC-001-001",
+        "source": "MULE-SRC-002",
+        "dest": "MULE-FC-001",
+        "amount": 14800.0,
+        "timestamp": "2024-06-12T11:00:00",
+        "typology": "layering",
+        "description": "Fan-out: $14,800.00 from Offshore Wire Source to Fan Mule Charlie"
+      },
+      {
+        "id": "S2-001-COLL-001",
+        "source": "MULE-FA-001",
+        "dest": "MULE-COLL-001",
+        "amount": 14250.0,
+        "timestamp": "2024-06-12T13:00:00",
+        "typology": "mule_network",
+        "description": "Fan Mule Alpha forwards $14,250.00 to Collector"
+      },
+      {
+        "id": "S2-001-COLL-001",
+        "source": "MULE-FB-001",
+        "dest": "MULE-COLL-001",
+        "amount": 14440.0,
+        "timestamp": "2024-06-12T14:00:00",
+        "typology": "mule_network",
+        "description": "Fan Mule Bravo forwards $14,440.00 to Collector"
+      },
+      {
+        "id": "S2-001-COLL-001",
+        "source": "MULE-FC-001",
+        "dest": "MULE-COLL-001",
+        "amount": 14060.0,
+        "timestamp": "2024-06-12T15:00:00",
+        "typology": "mule_network",
+        "description": "Fan Mule Charlie forwards $14,060.00 to Collector"
+      },
+      {
+        "id": "S2-COLL-INT-001",
+        "source": "MULE-COLL-001",
+        "dest": "MULE-INT-001",
+        "amount": 40612.5,
+        "timestamp": "2024-06-12T18:00:00",
+        "typology": "layering",
+        "description": "Collector sends $40,612.50 to Integration Business"
+      }
+    ]
+  },
+  {
+    "name": "Circular Layering",
+    "description": "4 accounts pass funds in a circle (A\u2192B\u2192C\u2192D\u2192A) over 2 full cycles. Each hop extracts a small fee, and the circular pattern obscures the original source of funds.",
+    "typology": "layering",
+    "expected_detection": "Agent should detect the circular pattern: all 4 accounts are both senders and receivers. The cycle should be visible in the entity graph. Amount degradation across hops should be flagged.",
+    "num_accounts": 4,
+    "num_transactions": 8,
+    "accounts": [
+      {
+        "id": "MULE-CIR-A-001",
+        "name": "Circle Node Alpha",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-CIR-B-001",
+        "name": "Circle Node Bravo",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-CIR-C-001",
+        "name": "Circle Node Charlie",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-CIR-D-001",
+        "name": "Circle Node Delta",
+        "role": "mule"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "S3-R1-H1-001",
+        "source": "MULE-CIR-A-001",
+        "dest": "MULE-CIR-B-001",
+        "amount": 24250.0,
+        "timestamp": "2024-06-14T08:00:00",
+        "typology": "layering",
+        "description": "Circular layering round 1, hop 1: $24,250.00 from Circle Node Alpha to Circle Node Bravo"
+      },
+      {
+        "id": "S3-R1-H2-001",
+        "source": "MULE-CIR-B-001",
+        "dest": "MULE-CIR-C-001",
+        "amount": 23280.0,
+        "timestamp": "2024-06-14T11:00:00",
+        "typology": "layering",
+        "description": "Circular layering round 1, hop 2: $23,280.00 from Circle Node Bravo to Circle Node Charlie"
+      },
+      {
+        "id": "S3-R1-H3-001",
+        "source": "MULE-CIR-C-001",
+        "dest": "MULE-CIR-D-001",
+        "amount": 22116.0,
+        "timestamp": "2024-06-14T14:00:00",
+        "typology": "layering",
+        "description": "Circular layering round 1, hop 3: $22,116.00 from Circle Node Charlie to Circle Node Delta"
+      },
+      {
+        "id": "S3-R1-H4-001",
+        "source": "MULE-CIR-D-001",
+        "dest": "MULE-CIR-A-001",
+        "amount": 20789.04,
+        "timestamp": "2024-06-14T17:00:00",
+        "typology": "layering",
+        "description": "Circular layering round 1, hop 4: $20,789.04 from Circle Node Delta to Circle Node Alpha"
+      },
+      {
+        "id": "S3-R2-H1-001",
+        "source": "MULE-CIR-A-001",
+        "dest": "MULE-CIR-B-001",
+        "amount": 20165.37,
+        "timestamp": "2024-06-15T08:00:00",
+        "typology": "layering",
+        "description": "Circular layering round 2, hop 1: $20,165.37 from Circle Node Alpha to Circle Node Bravo"
+      },
+      {
+        "id": "S3-R2-H2-001",
+        "source": "MULE-CIR-B-001",
+        "dest": "MULE-CIR-C-001",
+        "amount": 19358.76,
+        "timestamp": "2024-06-15T11:00:00",
+        "typology": "layering",
+        "description": "Circular layering round 2, hop 2: $19,358.76 from Circle Node Bravo to Circle Node Charlie"
+      },
+      {
+        "id": "S3-R2-H3-001",
+        "source": "MULE-CIR-C-001",
+        "dest": "MULE-CIR-D-001",
+        "amount": 18390.82,
+        "timestamp": "2024-06-15T14:00:00",
+        "typology": "layering",
+        "description": "Circular layering round 2, hop 3: $18,390.82 from Circle Node Charlie to Circle Node Delta"
+      },
+      {
+        "id": "S3-R2-H4-001",
+        "source": "MULE-CIR-D-001",
+        "dest": "MULE-CIR-A-001",
+        "amount": 17287.37,
+        "timestamp": "2024-06-15T17:00:00",
+        "typology": "layering",
+        "description": "Circular layering round 2, hop 4: $17,287.37 from Circle Node Delta to Circle Node Alpha"
+      }
+    ]
+  },
+  {
+    "name": "Structuring + Mule Hybrid",
+    "description": "Source distributes ~$98K across 4 mules through 20 structured deposits below $5K each. After a 2-day delay, mules consolidate into a single account. Combines structuring and mule-network typologies.",
+    "typology": "structuring",
+    "expected_detection": "Agent should detect: (1) structuring pattern at Source \u2192 Mules deposits, (2) mule-network pattern at Mules \u2192 Consolidator, (3) all 6 accounts linked in entity graph. Should flag both typologies.",
+    "num_accounts": 6,
+    "num_transactions": 24,
+    "accounts": [
+      {
+        "id": "MULE-SMRF-SRC-001",
+        "name": "Structuring Source",
+        "role": "source"
+      },
+      {
+        "id": "MULE-SMRF-M1-001",
+        "name": "Smurfing Mule 1",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-SMRF-M2-001",
+        "name": "Smurfing Mule 2",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-SMRF-M3-001",
+        "name": "Smurfing Mule 3",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-SMRF-M4-001",
+        "name": "Smurfing Mule 4",
+        "role": "mule"
+      },
+      {
+        "id": "MULE-SMRF-CON-001",
+        "name": "Consolidation Account",
+        "role": "collector"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "S4-SRC-M1-001",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M1-001",
+        "amount": 4859.86,
+        "timestamp": "2024-06-16T07:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #1: $4,859.86 from Structuring Source to Smurfing Mule 1"
+      },
+      {
+        "id": "S4-SRC-M1-002",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M1-001",
+        "amount": 4709.64,
+        "timestamp": "2024-06-16T09:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #2: $4,709.64 from Structuring Source to Smurfing Mule 1"
+      },
+      {
+        "id": "S4-SRC-M1-003",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M1-001",
+        "amount": 4802.13,
+        "timestamp": "2024-06-16T11:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #3: $4,802.13 from Structuring Source to Smurfing Mule 1"
+      },
+      {
+        "id": "S4-SRC-M1-004",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M1-001",
+        "amount": 4767.97,
+        "timestamp": "2024-06-16T13:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #4: $4,767.97 from Structuring Source to Smurfing Mule 1"
+      },
+      {
+        "id": "S4-SRC-M1-005",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M1-001",
+        "amount": 4922.07,
+        "timestamp": "2024-06-16T15:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #5: $4,922.07 from Structuring Source to Smurfing Mule 1"
+      },
+      {
+        "id": "S4-SRC-M2-001",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M2-001",
+        "amount": 4787.96,
+        "timestamp": "2024-06-16T17:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #6: $4,787.96 from Structuring Source to Smurfing Mule 2"
+      },
+      {
+        "id": "S4-SRC-M2-002",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M2-001",
+        "amount": 4837.04,
+        "timestamp": "2024-06-16T19:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #7: $4,837.04 from Structuring Source to Smurfing Mule 2"
+      },
+      {
+        "id": "S4-SRC-M2-003",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M2-001",
+        "amount": 4716.72,
+        "timestamp": "2024-06-16T21:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #8: $4,716.72 from Structuring Source to Smurfing Mule 2"
+      },
+      {
+        "id": "S4-SRC-M2-004",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M2-001",
+        "amount": 4824.38,
+        "timestamp": "2024-06-16T23:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #9: $4,824.38 from Structuring Source to Smurfing Mule 2"
+      },
+      {
+        "id": "S4-SRC-M2-005",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M2-001",
+        "amount": 4760.88,
+        "timestamp": "2024-06-17T01:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #10: $4,760.88 from Structuring Source to Smurfing Mule 2"
+      },
+      {
+        "id": "S4-SRC-M3-001",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M3-001",
+        "amount": 4944.59,
+        "timestamp": "2024-06-17T03:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #11: $4,944.59 from Structuring Source to Smurfing Mule 3"
+      },
+      {
+        "id": "S4-SRC-M3-002",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M3-001",
+        "amount": 4854.29,
+        "timestamp": "2024-06-17T05:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #12: $4,854.29 from Structuring Source to Smurfing Mule 3"
+      },
+      {
+        "id": "S4-SRC-M3-003",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M3-001",
+        "amount": 4928.41,
+        "timestamp": "2024-06-17T07:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #13: $4,928.41 from Structuring Source to Smurfing Mule 3"
+      },
+      {
+        "id": "S4-SRC-M3-004",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M3-001",
+        "amount": 4722.58,
+        "timestamp": "2024-06-17T09:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #14: $4,722.58 from Structuring Source to Smurfing Mule 3"
+      },
+      {
+        "id": "S4-SRC-M3-005",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M3-001",
+        "amount": 4941.48,
+        "timestamp": "2024-06-17T11:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #15: $4,941.48 from Structuring Source to Smurfing Mule 3"
+      },
+      {
+        "id": "S4-SRC-M4-001",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M4-001",
+        "amount": 4710.64,
+        "timestamp": "2024-06-17T13:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #16: $4,710.64 from Structuring Source to Smurfing Mule 4"
+      },
+      {
+        "id": "S4-SRC-M4-002",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M4-001",
+        "amount": 4845.19,
+        "timestamp": "2024-06-17T15:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #17: $4,845.19 from Structuring Source to Smurfing Mule 4"
+      },
+      {
+        "id": "S4-SRC-M4-003",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M4-001",
+        "amount": 4756.05,
+        "timestamp": "2024-06-17T17:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #18: $4,756.05 from Structuring Source to Smurfing Mule 4"
+      },
+      {
+        "id": "S4-SRC-M4-004",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M4-001",
+        "amount": 4776.95,
+        "timestamp": "2024-06-17T19:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #19: $4,776.95 from Structuring Source to Smurfing Mule 4"
+      },
+      {
+        "id": "S4-SRC-M4-005",
+        "source": "MULE-SMRF-SRC-001",
+        "dest": "MULE-SMRF-M4-001",
+        "amount": 4823.62,
+        "timestamp": "2024-06-17T21:00:00",
+        "typology": "structuring",
+        "description": "Structured deposit #20: $4,823.62 from Structuring Source to Smurfing Mule 4"
+      },
+      {
+        "id": "S4-M1-CON-001",
+        "source": "MULE-SMRF-M1-001",
+        "dest": "MULE-SMRF-CON-001",
+        "amount": 22918.75,
+        "timestamp": "2024-06-18T07:00:00",
+        "typology": "mule_network",
+        "description": "Smurfing Mule 1 consolidates $22,918.75 to Consolidation Account"
+      },
+      {
+        "id": "S4-M2-CON-001",
+        "source": "MULE-SMRF-M2-001",
+        "dest": "MULE-SMRF-CON-001",
+        "amount": 22918.75,
+        "timestamp": "2024-06-18T09:00:00",
+        "typology": "mule_network",
+        "description": "Smurfing Mule 2 consolidates $22,918.75 to Consolidation Account"
+      },
+      {
+        "id": "S4-M3-CON-001",
+        "source": "MULE-SMRF-M3-001",
+        "dest": "MULE-SMRF-CON-001",
+        "amount": 22918.75,
+        "timestamp": "2024-06-18T11:00:00",
+        "typology": "mule_network",
+        "description": "Smurfing Mule 3 consolidates $22,918.75 to Consolidation Account"
+      },
+      {
+        "id": "S4-M4-CON-001",
+        "source": "MULE-SMRF-M4-001",
+        "dest": "MULE-SMRF-CON-001",
+        "amount": 22918.75,
+        "timestamp": "2024-06-18T13:00:00",
+        "typology": "mule_network",
+        "description": "Smurfing Mule 4 consolidates $22,918.75 to Consolidation Account"
+      }
+    ]
+  }
+]

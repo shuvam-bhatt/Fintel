@@ -1,0 +1,37 @@
+# Fintel — Custom PostgreSQL 16 with Apache AGE + pgvector
+# Multi-stage build: compile AGE from source, install pgvector from apt
+
+# Stage 1: Build Apache AGE from source
+FROM postgres:16 AS age-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    postgresql-server-dev-16 \
+    git \
+    ca-certificates \
+    libreadline-dev \
+    zlib1g-dev \
+    flex \
+    bison \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --branch release/PG16/1.5.0 https://github.com/apache/age.git /tmp/age
+WORKDIR /tmp/age
+RUN make PG_CONFIG=/usr/bin/pg_config install
+
+# Stage 2: Final image with both extensions
+FROM postgres:16
+
+# Install pgvector from apt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-16-pgvector \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy AGE extension files from builder stage
+COPY --from=age-builder /usr/lib/postgresql/16/lib/age.so /usr/lib/postgresql/16/lib/
+COPY --from=age-builder /usr/share/postgresql/16/extension/age* /usr/share/postgresql/16/extension/
+
+# Copy initialization scripts
+COPY init-db.sql /docker-entrypoint-initdb.d/01-init-db.sql
+
+EXPOSE 5432

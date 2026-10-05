@@ -1,0 +1,241 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: #1e3a8a;
+  --color-primary-light: #2563eb;
+  --color-primary-dark: #172554;
+  --color-accent: #0284c7;
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border-color);
+  --color-muted: var(--muted);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Institutional Federal / Compliance Portal Theme */
+:root {
+  --background: #0b1120;        /* Deep Federal Navy Charcoal */
+  --foreground: #e2e8f0;        /* Crisp High-Contrast Slate White */
+  --surface: #111c33;           /* Solid Navy Slate Surface */
+  --surface-hover: #172545;     /* Dark Slate Hover */
+  --surface-alt: #0e172a;       /* Alternate Container */
+  --border-color: #243553;      /* Crisp Solid 1px Border */
+  --border-subtle: #1a2840;     /* Subtle Grid Line */
+  --muted: #8494ab;             /* Legible Muted Slate */
+  --federal-blue: #1e3a8a;      /* US Federal Blue */
+  --federal-gold: #d97706;      /* Official Seal Amber / Gold */
+  --official-green: #15803d;    /* Verified / Approved Green */
+  --official-red: #b91c1c;      /* Critical / Rejected Red */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: 0 !important; /* Strict No Rounded Corners - Official Government UI */
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* Scrollbar - Clean Federal */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: #334155; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* Official Panel Containers - Zero Gradients, Solid Borders */
+.gov-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  padding: 1.25rem;
+}
+
+.gov-panel-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.gov-topbar {
+  background: #070d18;
+  border-bottom: 2px solid var(--federal-gold);
+  color: #94a3b8;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 6px 16px;
+}
+
+/* Institutional Badges - Square, High-Contrast */
+.gov-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid;
+}
+
+.gov-badge-new {
+  background: #172554;
+  color: #93c5fd;
+  border-color: #1d4ed8;
+}
+
+.gov-badge-investigating {
+  background: #451a03;
+  color: #fde047;
+  border-color: #ca8a04;
+}
+
+.gov-badge-approved {
+  background: #052e16;
+  color: #86efac;
+  border-color: #16a34a;
+}
+
+.gov-badge-rejected {
+  background: #450a0a;
+  color: #fca5a5;
+  border-color: #dc2626;
+}
+
+/* Official Government Buttons */
+.gov-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.gov-btn-primary {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+.gov-btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #60a5fa;
+}
+
+.gov-btn-secondary {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+.gov-btn-secondary:hover:not(:disabled) {
+  background: #334155;
+  border-color: #64748b;
+}
+
+.gov-btn-success {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #22c55e;
+}
+.gov-btn-success:hover:not(:disabled) {
+  background: #16a34a;
+}
+
+.gov-btn-danger {
+  background: #991b1b;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+.gov-btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* Official Table */
+.gov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.gov-table th {
+  background: #0e172a;
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--border-color);
+  text-align: left;
+}
+
+.gov-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: #cbd5e1;
+}
+
+.gov-table tr:hover td {
+  background: #17243b;
+}
+
+/* Institutional Form Inputs */
+.gov-input, .gov-select {
+  background: #090e18;
+  color: #e2e8f0;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  width: 100%;
+}
+
+.gov-input:focus, .gov-select:focus {
+  outline: 2px solid #2563eb;
+  border-color: #3b82f6;
+}
+
+/* Citation Pill & Exhibit Highlight */
+.exhibit-cite {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  background: #0f2747;
+  color: #38bdf8;
+  border: 1px solid #0284c7;
+  margin-left: 4px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.exhibit-cite:hover {
+  background: #0284c7;
+  color: #ffffff;
+}

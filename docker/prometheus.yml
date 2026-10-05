@@ -1,0 +1,19 @@
+# Fintel — Prometheus Configuration
+# Scrape config for monitoring the FastAPI backend
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # FastAPI backend metrics (Person 5 will add prometheus-fastapi-instrumentator)
+  - job_name: 'Fintel-api'
+    static_configs:
+      - targets: ['api:8000']
+    metrics_path: /metrics
+    scrape_interval: 10s

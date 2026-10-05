@@ -1,0 +1,120 @@
+# Fintel — Docker Compose
+# Brings up the full infrastructure with: docker compose up --build
+#
+# Services:
+#   db          — PostgreSQL 16 + Apache AGE + pgvector
+#   api         — FastAPI backend
+#   frontend    — Next.js frontend
+#   prometheus  — Metrics collection
+#   grafana     — Dashboards
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # PostgreSQL 16 with Apache AGE (graph) + pgvector (embeddings)
+  # ─────────────────────────────────────────────────────────────
+  db:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.postgres
+    container_name: Fintel-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-Fintel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Fintel_dev_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-Fintel}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-Fintel} -d ${POSTGRES_DB:-Fintel}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────
+  # FastAPI Backend
+  # ─────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: Fintel-api
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-Fintel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Fintel_dev_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-Fintel}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql://Fintel:Fintel_dev_2026@db:5432/Fintel
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      DATA_DIR: /app/data/generated
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────
+  # Next.js Frontend
+  # ─────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: Fintel-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_GRAFANA_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────
+  # Prometheus — Metrics collection
+  # ─────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: Fintel-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────
+  # Grafana — Dashboards
+  # ─────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: Fintel-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  prometheus_data:
+  grafana_data:
