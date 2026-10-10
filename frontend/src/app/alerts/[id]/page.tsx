@@ -254,8 +254,8 @@ export default function AlertDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#070c16] text-slate-100 flex items-center justify-center p-8 font-mono">
-        <div className="gov-panel p-8 text-center max-w-md w-full border-[#243553]">
+      <div className="min-h-screen bg-[var(--background)] text-slate-100 flex items-center justify-center p-8 font-mono">
+        <div className="gov-panel p-8 text-center max-w-md w-full shadow-[var(--neu-outer)] rounded-[16px]">
           <RefreshCw className="animate-spin text-blue-400 mx-auto mb-4" size={24} />
           <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Accessing Federal Case Ledger</h2>
           <p className="text-xs text-slate-400">Loading Case #{alertId?.slice(0, 8)} records from database...</p>
@@ -266,8 +266,8 @@ export default function AlertDetailPage() {
 
   if (error || !alert) {
     return (
-      <div className="min-h-screen bg-[#070c16] text-slate-100 flex items-center justify-center p-8 font-mono">
-        <div className="gov-panel p-8 text-center max-w-md w-full border-red-800 bg-[#160b0b]">
+      <div className="min-h-screen bg-[var(--background)] text-slate-100 flex items-center justify-center p-8 font-mono">
+        <div className="gov-panel p-8 text-center max-w-md w-full shadow-[var(--neu-outer)] rounded-[16px]">
           <AlertTriangle className="text-red-400 mx-auto mb-3" size={28} />
           <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Case File Record Not Found</h2>
           <p className="text-xs text-slate-400 mb-6">{error || "Unable to locate alert identifier in system."}</p>
@@ -287,9 +287,9 @@ export default function AlertDetailPage() {
   const tier = getRiskTier(riskScore);
 
   return (
-    <div className="min-h-screen bg-[#070c16] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[var(--background)] text-slate-100 flex flex-col font-sans">
       {/* ── Official Government Banner ────────────────────────────────────── */}
-      <div className="gov-topbar flex flex-wrap items-center justify-between border-b border-[#243553]">
+      <div className="gov-topbar flex flex-wrap items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="font-bold text-amber-400">FINANCIAL INTELLIGENCE UNIT (FIU)</span>
           <span className="text-slate-500">|</span>
@@ -303,7 +303,7 @@ export default function AlertDetailPage() {
       </div>
 
       {/* ── Case Control Header ───────────────────────────────────────────── */}
-      <header className="bg-[#0b1424] border-b border-[#243553] py-4 px-6 sm:px-8">
+      <header className="bg-[var(--surface)] py-4 px-6 sm:px-8 shadow-[var(--neu-outer-sm)] rounded-b-[16px] mb-6">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <Link
@@ -313,7 +313,7 @@ export default function AlertDetailPage() {
             >
               <ChevronLeft size={14} /> Back to Ledger
             </Link>
-            <div className="h-6 w-px bg-[#243553]" />
+            <div className="h-6 w-px bg-transparent" />
             <div>
               <div className="flex items-center gap-3">
                 <span
@@ -363,7 +363,7 @@ export default function AlertDetailPage() {
       <main className="max-w-7xl mx-auto px-6 sm:px-8 py-8 flex-1 w-full space-y-8">
         {/* Success Alert */}
         {decisionSuccess && (
-          <div className="p-4 bg-[#052e16] border border-[#16a34a] text-emerald-300 text-xs font-mono flex items-center justify-between">
+          <div className="p-4 bg-[var(--surface)] shadow-[var(--neu-inner)] rounded-[12px] text-emerald-400 text-xs font-mono flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={16} />
               <span>{decisionSuccess}</span>
@@ -442,11 +442,11 @@ export default function AlertDetailPage() {
           </div>
 
           {/* Raw System Event Log Payload */}
-          <div className="mt-6 pt-4 border-t border-[#243553]">
+          <div className="mt-6 pt-4">
             <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-2 font-bold">
               Raw Source Ingestion Payload / Telemetry Record:
             </span>
-            <div className="bg-[#070d18] border border-[#243553] p-3 text-xs font-mono text-slate-300 leading-relaxed overflow-x-auto whitespace-pre-wrap">
+            <div className="bg-[var(--background)] shadow-[var(--neu-inner)] rounded-[12px] p-4 text-xs font-mono text-slate-300 leading-relaxed overflow-x-auto whitespace-pre-wrap">
               {alert.raw_text}
             </div>
           </div>
@@ -461,10 +461,10 @@ export default function AlertDetailPage() {
               <button
                 id="tab-graph-btn"
                 onClick={() => setActiveTab("graph")}
-                className={`px-4 py-2 border font-bold uppercase transition ${
+                className={`px-4 py-2 font-bold uppercase transition rounded-[10px] m-1 ${
                   activeTab === "graph"
-                    ? "bg-[#1e3a8a] text-white border-[#3b82f6]"
-                    : "bg-[#0b1424] text-slate-400 border-[#243553] hover:text-white"
+                    ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner)]"
+                    : "bg-[var(--surface)] text-[var(--muted)] shadow-[var(--neu-outer-sm)] hover:shadow-[var(--neu-outer)] hover:text-white"
                 }`}
               >
                 [1] Knowledge Graph Network
@@ -472,10 +472,10 @@ export default function AlertDetailPage() {
               <button
                 id="tab-timeline-btn"
                 onClick={() => setActiveTab("timeline")}
-                className={`px-4 py-2 border font-bold uppercase transition ${
+                className={`px-4 py-2 font-bold uppercase transition rounded-[10px] m-1 ${
                   activeTab === "timeline"
-                    ? "bg-[#1e3a8a] text-white border-[#3b82f6]"
-                    : "bg-[#0b1424] text-slate-400 border-[#243553] hover:text-white"
+                    ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner)]"
+                    : "bg-[var(--surface)] text-[var(--muted)] shadow-[var(--neu-outer-sm)] hover:shadow-[var(--neu-outer)] hover:text-white"
                 }`}
               >
                 [2] Event Velocity Log
@@ -483,10 +483,10 @@ export default function AlertDetailPage() {
               <button
                 id="tab-entities-btn"
                 onClick={() => setActiveTab("entities")}
-                className={`px-4 py-2 border font-bold uppercase transition ${
+                className={`px-4 py-2 font-bold uppercase transition rounded-[10px] m-1 ${
                   activeTab === "entities"
-                    ? "bg-[#1e3a8a] text-white border-[#3b82f6]"
-                    : "bg-[#0b1424] text-slate-400 border-[#243553] hover:text-white"
+                    ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner)]"
+                    : "bg-[var(--surface)] text-[var(--muted)] shadow-[var(--neu-outer-sm)] hover:shadow-[var(--neu-outer)] hover:text-white"
                 }`}
               >
                 [3] Extracted Entities ({alert.entities?.length || 0})
@@ -494,10 +494,10 @@ export default function AlertDetailPage() {
               <button
                 id="tab-rag-btn"
                 onClick={() => setActiveTab("rag")}
-                className={`px-4 py-2 border font-bold uppercase transition ${
+                className={`px-4 py-2 font-bold uppercase transition rounded-[10px] m-1 ${
                   activeTab === "rag"
-                    ? "bg-[#1e3a8a] text-white border-[#3b82f6]"
-                    : "bg-[#0b1424] text-slate-400 border-[#243553] hover:text-white"
+                    ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner)]"
+                    : "bg-[var(--surface)] text-[var(--muted)] shadow-[var(--neu-outer-sm)] hover:shadow-[var(--neu-outer)] hover:text-white"
                 }`}
               >
                 [4] Precedents ({similarCases.length})
@@ -523,7 +523,7 @@ export default function AlertDetailPage() {
                 </div>
 
                 {/* Clean Official SVG Network Canvas */}
-                <div className="w-full h-80 bg-[#070d18] border border-[#243553] relative overflow-hidden flex items-center justify-center p-4">
+                <div className="w-full h-80 bg-[var(--background)] shadow-[var(--neu-inner)] rounded-[12px] relative overflow-hidden flex items-center justify-center p-4 mt-4">
                   <svg className="w-full h-full" viewBox="0 0 600 300">
                     {/* Grid Pattern */}
                     <defs>
@@ -624,25 +624,25 @@ export default function AlertDetailPage() {
                       {investigationData.linked_entities.map((item, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between p-2.5 bg-[#090f1b] border border-[#243553] text-xs font-mono"
+                          className="flex items-center justify-between p-3 bg-[var(--surface)] rounded-[10px] shadow-[var(--neu-outer-sm)] text-xs font-mono mb-2"
                         >
                           <div className="flex items-center gap-3">
-                            <span className="p-1 bg-[#162238]">{getEntityIcon(item.entity_type)}</span>
+                            <span className="p-1.5 bg-[var(--background)] shadow-[var(--neu-inner-sm)] rounded-[6px]">{getEntityIcon(item.entity_type)}</span>
                             <div>
                               <span className="font-bold text-white">{item.entity_value}</span>
-                              <span className="text-[10px] text-slate-400 block">
+                              <span className="text-[10px] text-slate-400 block mt-0.5">
                                 TYPE: {item.entity_type.toUpperCase()} • RELATION: {item.relationship?.toUpperCase() || "LINKED"}
                               </span>
                             </div>
                           </div>
-                          <span className="gov-badge bg-blue-950 text-blue-300 border-blue-800 text-[10px]">
+                          <span className="gov-badge">
                             HOP {item.hop_distance || 1}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400 py-3 text-center bg-[#090f1b] border border-[#243553] font-mono">
+                    <p className="text-xs text-[var(--muted)] py-4 text-center bg-[var(--surface)] shadow-[var(--neu-inner)] rounded-[10px] font-mono">
                       No network hops recorded yet. Click &quot;Execute Graph Agent&quot; above to traverse the knowledge graph.
                     </p>
                   )}
@@ -659,8 +659,8 @@ export default function AlertDetailPage() {
                     Chronological Audit Ledger & Evidence Progression
                   </h3>
                 </div>
-                <div className="space-y-3 font-mono text-xs">
-                  <div className="p-3 bg-[#090f1b] border border-[#243553] space-y-1">
+                <div className="space-y-4 font-mono text-xs mt-4">
+                  <div className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] space-y-1">
                     <div className="flex items-center justify-between text-slate-400 text-[11px]">
                       <span className="text-amber-400 font-bold">[STEP 1] ANOMALY DETECTION</span>
                       <span>{formatDate(alert.timestamp)}</span>
@@ -670,7 +670,7 @@ export default function AlertDetailPage() {
                     </p>
                   </div>
 
-                  <div className="p-3 bg-[#090f1b] border border-[#243553] space-y-1">
+                  <div className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] space-y-1">
                     <div className="flex items-center justify-between text-slate-400 text-[11px]">
                       <span className="text-blue-400 font-bold">[STEP 2] NLP DISAMBIGUATION</span>
                       <span>AUTOMATED INTAKE</span>
@@ -680,7 +680,7 @@ export default function AlertDetailPage() {
                     </p>
                   </div>
 
-                  <div className="p-3 bg-[#090f1b] border border-[#243553] space-y-1">
+                  <div className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] space-y-1">
                     <div className="flex items-center justify-between text-slate-400 text-[11px]">
                       <span className="text-emerald-400 font-bold">[STEP 3] KNOWLEDGE GRAPH CORRELATION</span>
                       <span>AGENT ADJUDICATION</span>
@@ -705,9 +705,9 @@ export default function AlertDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
                   {alert.entities && alert.entities.length > 0 ? (
                     alert.entities.map((ent, idx) => (
-                      <div key={idx} className="p-3 bg-[#090f1b] border border-[#243553] flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <span className="p-1 bg-[#162238]">{getEntityIcon(ent.entity_type)}</span>
+                      <div key={idx} className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className="p-1.5 bg-[var(--background)] shadow-[var(--neu-inner-sm)] rounded-[6px]">{getEntityIcon(ent.entity_type)}</span>
                           <div>
                             <span className="font-bold text-white block">{ent.entity_value}</span>
                             <span className="text-[10px] text-slate-400">TYPE: {ent.entity_type.toUpperCase()}</span>
@@ -741,9 +741,9 @@ export default function AlertDetailPage() {
                     Querying vector database for matching precedents...
                   </div>
                 ) : similarCases.length > 0 ? (
-                  <div className="space-y-3 font-mono text-xs">
+                  <div className="space-y-4 font-mono text-xs mt-4">
                     {similarCases.map((c, idx) => (
-                      <div key={idx} className="p-3 bg-[#090f1b] border border-[#243553] space-y-1">
+                      <div key={idx} className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] space-y-2">
                         <div className="flex items-center justify-between text-[11px] mb-1">
                           <span className="font-bold text-blue-300 uppercase">{c.source_type.replace(/_/g, " ")}</span>
                           <span className="gov-badge bg-blue-950 text-blue-300 border-blue-800 text-[10px]">
@@ -808,7 +808,7 @@ export default function AlertDetailPage() {
                   ) : (
                     <div className="space-y-3">
                       {/* Document Sheet */}
-                      <div className="bg-[#070d18] border border-[#243553] p-4 text-xs font-mono leading-relaxed text-slate-200 space-y-2.5">
+                      <div className="bg-[var(--background)] shadow-[var(--neu-inner)] rounded-[12px] p-5 text-xs font-mono leading-relaxed text-[var(--foreground)] space-y-2.5">
                         {sentences.map((sentence, idx) => {
                           const hasCitation = citations.some(
                             (c) => c.sentence_index === idx || sentence.includes(c.sentence)
@@ -824,11 +824,11 @@ export default function AlertDetailPage() {
                                 );
                                 setSelectedCitation(match || null);
                               }}
-                              className={`cursor-pointer transition-all inline px-1 py-0.5 ${
+                              className={`cursor-pointer transition-all inline px-1 py-0.5 rounded-[4px] ${
                                 isSelected
-                                  ? "bg-[#1e3a8a] text-white font-bold"
+                                  ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner-sm)]"
                                   : hasCitation
-                                  ? "hover:bg-[#162238] border-b border-dotted border-blue-400 text-slate-200"
+                                  ? "hover:text-[var(--primary)] border-b border-dotted border-[var(--primary)] text-slate-200"
                                   : "text-slate-300"
                               }`}
                               title={hasCitation ? "Click to verify source exhibit citation" : "Narrative statement"}
@@ -845,7 +845,7 @@ export default function AlertDetailPage() {
                       </div>
 
                       {/* Evidence Grounding Card */}
-                      <div className="gov-panel bg-[#0a1426] border-[#3b82f6] p-4 space-y-2">
+                      <div className="gov-panel mt-4 space-y-3">
                         <div className="flex items-center justify-between border-b border-[#243553] pb-1.5">
                           <span className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                             <FileCheck size={13} className="text-emerald-400" />
@@ -914,7 +914,7 @@ export default function AlertDetailPage() {
                   </div>
                 </div>
               ) : (
-                <div className="py-12 px-4 border border-[#243553] bg-[#070d18] text-center space-y-3 font-mono">
+                <div className="py-12 px-4 bg-[var(--background)] shadow-[var(--neu-inner)] rounded-[12px] text-center space-y-3 font-mono mt-4">
                   <FileText className="text-slate-500 mx-auto" size={28} />
                   <p className="text-xs font-bold text-white uppercase tracking-wider">No SAR Draft Generated</p>
                   <p className="text-[11px] text-slate-400 max-w-xs mx-auto">

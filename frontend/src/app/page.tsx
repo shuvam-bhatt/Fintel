@@ -144,9 +144,9 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070c16] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[var(--background)] text-slate-100 flex flex-col font-sans">
       {/* ── Official Federal Government Banner ────────────────────────────── */}
-      <div className="gov-topbar flex flex-wrap items-center justify-between border-b border-[#243553]">
+      <div className="gov-topbar flex flex-wrap items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="font-bold text-amber-400">FINANCIAL INTELLIGENCE UNIT (FIU)</span>
           <span className="text-slate-500">|</span>
@@ -159,10 +159,10 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Agency Portal Header ─────────────────────────────────────────── */}
-      <header className="bg-[#0b1424] border-b border-[#243553] py-4 px-6 sm:px-8">
+      <header className="bg-[var(--surface)] py-4 px-6 sm:px-8 mb-6 shadow-[var(--neu-outer-sm)] rounded-b-[16px]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-[#1e3a8a] border border-[#3b82f6] flex items-center justify-center text-white">
+            <div className="w-10 h-10 bg-[var(--surface)] shadow-[var(--neu-inner)] rounded-full flex items-center justify-center text-[var(--primary)]">
               <Building size={20} />
             </div>
             <div>
@@ -174,6 +174,7 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
+          <br />
 
           <div className="flex items-center gap-3">
             <Link
@@ -211,8 +212,8 @@ export default function DashboardPage() {
 
         {/* ── Section 1: Official Summary Tiles ──────────────────────────── */}
         <section aria-labelledby="section-stats-title">
-          <div className="border-b border-[#243553] pb-2 mb-4">
-            <h2 id="section-stats-title" className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
+          <div className="pt-10 pb-6 mb-6">
+            <h2 id="section-stats-title" className="text-sm font-mono uppercase tracking-wider text-[var(--muted)] font-bold">
               Aggregate Risk Ledger Statistics
             </h2>
           </div>
@@ -282,7 +283,7 @@ export default function DashboardPage() {
 
         {/* ── Section 2: Case Query & Filter Form ────────────────────────── */}
         <section className="gov-panel" aria-labelledby="section-filters-title">
-          <div className="border-b border-[#243553] pb-2 mb-4 flex items-center justify-between">
+          <div className="pb-2 mb-4 flex items-center justify-between">
             <h2 id="section-filters-title" className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
               <Filter size={14} className="text-amber-400" />
               Alert Intake Query Controls
@@ -388,7 +389,7 @@ export default function DashboardPage() {
 
         {/* ── Section 3: Official Case Ledger Table ───────────────────────── */}
         <section className="gov-panel p-0 overflow-hidden" aria-labelledby="section-ledger-title">
-          <div className="bg-[#0b1424] p-4 border-b border-[#243553] flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-[var(--surface)] p-4 flex flex-wrap items-center justify-between gap-4 rounded-t-[12px]">
             <div>
               <h2 id="section-ledger-title" className="text-sm font-bold font-mono text-white tracking-wide uppercase flex items-center gap-2">
                 <Shield size={16} className="text-[#3b82f6]" />
@@ -443,7 +444,7 @@ export default function DashboardPage() {
                   alerts.map((alert) => {
                     const tier = getRiskTier(alert.risk_score);
                     return (
-                      <tr key={alert.id} className="hover:bg-[#121f38] transition">
+                      <tr key={alert.id} className="transition">
                         <td className="font-mono font-semibold text-slate-200">
                           {alert.transaction_id || alert.id.slice(0, 8)}
                         </td>
@@ -485,7 +486,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Table Pagination Controls */}
-          <div className="bg-[#0b1424] p-4 border-t border-[#243553] flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
+          <div className="bg-[var(--surface)] p-4 flex flex-wrap items-center justify-between gap-4 font-mono text-xs rounded-b-[12px] mt-4">
             <span className="text-slate-400">
               Page {page} of {totalPages} ({totalAlerts.toLocaleString()} records)
             </span>
@@ -513,8 +514,8 @@ export default function DashboardPage() {
         </section>
 
         {/* ── Section 4: Administrative Benchmark Info ────────────────────── */}
-        <section className="gov-panel bg-[#090f1b]" aria-labelledby="section-admin-title">
-          <div className="border-b border-[#243553] pb-2 mb-3">
+        <section className="gov-panel" aria-labelledby="section-admin-title">
+          <div className="pb-2 mb-3">
             <h3 id="section-admin-title" className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold flex items-center gap-2">
               <FileCheck size={14} className="text-emerald-400" />
               Regulatory Compliance Standard Note
