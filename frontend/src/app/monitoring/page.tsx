@@ -35,9 +35,9 @@ export default function MonitoringPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#070c16] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[var(--background)] text-slate-100 flex flex-col font-sans">
       {/* ── Official Government Banner ────────────────────────────────────── */}
-      <div className="gov-topbar flex flex-wrap items-center justify-between border-b border-[#243553]">
+      <div className="gov-topbar flex flex-wrap items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="font-bold text-amber-400">FINANCIAL INTELLIGENCE UNIT (FIU)</span>
           <span className="text-slate-500">|</span>
@@ -50,7 +50,7 @@ export default function MonitoringPage() {
       </div>
 
       {/* ── Monitoring Header ────────────────────────────────────────────── */}
-      <header className="bg-[#0b1424] border-b border-[#243553] py-4 px-6 sm:px-8">
+      <header className="bg-[var(--surface)] py-4 px-6 sm:px-8 mb-6 shadow-[var(--neu-outer-sm)] rounded-b-[16px]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <Link
@@ -59,7 +59,7 @@ export default function MonitoringPage() {
             >
               <ChevronLeft size={14} /> Back to Ledger
             </Link>
-            <div className="h-6 w-px bg-[#243553]" />
+            <div className="h-6 w-px bg-transparent" />
             <div>
               <span className="text-xs font-mono uppercase tracking-wider text-slate-400 block font-bold">
                 Section 9 Compliance Verification
@@ -100,8 +100,8 @@ export default function MonitoringPage() {
       <main className="max-w-7xl mx-auto px-6 sm:px-8 py-8 flex-1 w-full space-y-8">
         {/* Metric Tiles */}
         <section aria-labelledby="section-telemetry-stats">
-          <div className="border-b border-[#243553] pb-2 mb-4">
-            <h2 id="section-telemetry-stats" className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
+          <div className="pt-10 pb-6 mb-6">
+            <h2 id="section-telemetry-stats" className="text-sm font-mono uppercase tracking-wider text-[var(--muted)] font-bold">
               Core Specification Benchmark Metrics
             </h2>
           </div>
@@ -151,7 +151,7 @@ export default function MonitoringPage() {
 
         {/* Official Benchmark Results Table */}
         <section className="gov-panel p-0 overflow-hidden" aria-labelledby="section-benchmark-results">
-          <div className="bg-[#0b1424] p-4 border-b border-[#243553] flex items-center justify-between">
+          <div className="bg-[var(--surface)] p-4 flex items-center justify-between rounded-t-[12px]">
             <h2 id="section-benchmark-results" className="text-xs font-mono uppercase tracking-wider text-white font-bold flex items-center gap-2">
               <FileCheck size={14} className="text-emerald-400" />
               Official Section 9 Evaluation Report
@@ -222,7 +222,7 @@ export default function MonitoringPage() {
 
         {/* Embedded Grafana Panel View */}
         <section className="gov-panel space-y-4" aria-labelledby="section-grafana-title">
-          <div className="border-b border-[#243553] pb-3 flex flex-wrap items-center justify-between gap-4">
+          <div className="pb-3 flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 id="section-grafana-title" className="text-xs font-mono uppercase tracking-wider text-white font-bold flex items-center gap-2">
                 <BarChart3 className="text-amber-400" size={14} />
@@ -237,15 +237,15 @@ export default function MonitoringPage() {
             </span>
           </div>
 
-          <div className="w-full h-[480px] bg-[#070d18] border border-[#243553] relative overflow-hidden">
+          <div className="w-full h-[480px] bg-[var(--background)] relative overflow-hidden rounded-[12px] shadow-[var(--neu-inner)]">
             <iframe
               src={`${grafanaUrl}/d/Fintel-overview?orgId=1&kiosk`}
-              className="w-full h-full border-0"
+              className="w-full h-full border-0 rounded-[12px]"
               title="Grafana Dashboard Frame"
             />
             {/* Fallback Overlay */}
-            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6 text-center bg-[#070d18]/40">
-              <div className="pointer-events-auto bg-[#0b1424] border border-[#243553] p-6 max-w-md space-y-3 font-mono">
+            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6 text-center">
+              <div className="pointer-events-auto bg-[var(--surface)] p-6 max-w-md space-y-3 font-mono rounded-[12px] shadow-[var(--neu-outer)]">
                 <BarChart3 className="text-amber-400 mx-auto" size={28} />
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider">
                   Grafana Dashboard Integration
