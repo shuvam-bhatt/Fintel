@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Search,
   SlidersHorizontal,
-  ArrowUpRight,
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
@@ -19,6 +18,9 @@ import {
   Shield,
   Eye,
   PanelLeft,
+  Share2,
+  Activity,
+  FileText,
 } from "lucide-react";
 import { api, type Alert, type DashboardStats, type PaginatedAlerts } from "@/lib/api";
 
@@ -42,43 +44,38 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
-// Generate realistic bar heights matching the screenshot
-const BAR_DATA = [
-  { day: "Apr 1", height: 35 },
-  { day: "Apr 2", height: 25 },
-  { day: "Apr 3", height: 45 },
-  { day: "Apr 4", height: 30 },
-  { day: "Apr 5", height: 60 },
-  { day: "Apr 6", height: 40 },
-  { day: "Apr 7", height: 50 },
-  { day: "Apr 8", height: 38 },
-  { day: "Apr 9", height: 55 },
-  { day: "Apr 10", height: 42 },
-  { day: "Apr 11", height: 48 },
-  { day: "Apr 12", height: 75 },
-  { day: "Apr 13", height: 62 },
-  { day: "Apr 14", height: 50 },
-  { day: "Apr 15", height: 58 },
-  { day: "Apr 16", height: 35 },
-  { day: "Apr 17", height: 45 },
-  { day: "Apr 18", height: 55 },
-  { day: "Apr 19", height: 70 },
-  { day: "Apr 20", height: 52 },
-  { day: "Apr 21", height: 60 },
-  { day: "Apr 22", height: 48 },
-  { day: "Apr 23", height: 65 },
-  { day: "Apr 24", height: 72 },
-  { day: "Apr 25", height: 58 },
-  { day: "Apr 26", height: 80 },
-  { day: "Apr 27", height: 68 },
-  { day: "Apr 28", height: 55 },
-  { day: "Apr 29", height: 88 },
-  { day: "Apr 30", height: 70 },
-  { day: "May 1", height: 78 },
-  { day: "May 5", height: 60 },
-  { day: "May 8", height: 82 },
-  { day: "May 11", height: 85 },
-  { day: "May 16", height: 65 },
+// Daily Transaction Anomaly Velocity distribution
+const VELOCITY_DATA = [
+  { day: "Day 1", height: 35 },
+  { day: "Day 2", height: 25 },
+  { day: "Day 3", height: 45 },
+  { day: "Day 4", height: 30 },
+  { day: "Day 5", height: 60 },
+  { day: "Day 6", height: 40 },
+  { day: "Day 7", height: 50 },
+  { day: "Day 8", height: 38 },
+  { day: "Day 9", height: 55 },
+  { day: "Day 10", height: 42 },
+  { day: "Day 11", height: 48 },
+  { day: "Day 12", height: 75 },
+  { day: "Day 13", height: 62 },
+  { day: "Day 14", height: 50 },
+  { day: "Day 15", height: 58 },
+  { day: "Day 16", height: 35 },
+  { day: "Day 17", height: 45 },
+  { day: "Day 18", height: 55 },
+  { day: "Day 19", height: 70 },
+  { day: "Day 20", height: 52 },
+  { day: "Day 21", height: 60 },
+  { day: "Day 22", height: 48 },
+  { day: "Day 23", height: 65 },
+  { day: "Day 24", height: 72 },
+  { day: "Day 25", height: 58 },
+  { day: "Day 26", height: 80 },
+  { day: "Day 27", height: 68 },
+  { day: "Day 28", height: 55 },
+  { day: "Day 29", height: 88 },
+  { day: "Day 30", height: 70 },
 ];
 
 export default function DashboardPage() {
@@ -134,8 +131,8 @@ export default function DashboardPage() {
     fetchAlerts();
   }, [fetchAlerts]);
 
-  // Featured transactions for the right card
-  const topTransactions = alerts.slice(0, 3);
+  // Top 3 priority cases for the right panel
+  const priorityCases = alerts.slice(0, 3);
 
   return (
     <div className="flex-1 flex flex-col bg-[#0c0c0e] min-w-0">
@@ -143,9 +140,12 @@ export default function DashboardPage() {
       {/* ── Top Breadcrumb Header ─────────────────────────────────────────── */}
       <header className="h-14 border-b border-[#1e1e22] px-6 flex items-center justify-between shrink-0 bg-[#0c0c0e]">
         <div className="flex items-center gap-2.5 text-xs text-zinc-400">
-          <PanelLeft size={16} className="text-zinc-500 hover:text-zinc-300 cursor-pointer" />
+          <Link href="/" className="hover:text-zinc-200 flex items-center gap-1.5">
+            <PanelLeft size={16} className="text-zinc-500" />
+            <span>Dashboard</span>
+          </Link>
           <span className="text-zinc-600">/</span>
-          <span className="text-zinc-100 font-semibold tracking-tight">Home</span>
+          <span className="text-zinc-100 font-semibold tracking-tight">Alerts Queue</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -166,23 +166,15 @@ export default function DashboardPage() {
       {/* ── Main Dashboard Canvas ─────────────────────────────────────────── */}
       <div className="flex-1 p-6 space-y-6 max-w-[1600px] w-full mx-auto">
         
-        {/* ── Top Metric Cards (Checking account & Revenue) ────────────────── */}
+        {/* ── Top Summary Cards ────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           
-          {/* Card 1: Checking Account */}
+          {/* Card 1: Total Flagged Alerts */}
           <div className="ref-card flex items-center justify-between p-5">
             <div className="flex items-center gap-5">
-              {/* Circular Ring SVG */}
               <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
                 <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="24"
-                    fill="transparent"
-                    stroke="#222226"
-                    strokeWidth="5"
-                  />
+                  <circle cx="32" cy="32" r="24" fill="transparent" stroke="#222226" strokeWidth="5" />
                   <circle
                     cx="32"
                     cy="32"
@@ -197,44 +189,34 @@ export default function DashboardPage() {
                 </svg>
               </div>
 
-              {/* Metric Details */}
               <div className="space-y-0.5">
                 <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">
-                  Checking account
+                  Flagged Transaction Alerts
                 </h3>
-                <p className="text-[11px] text-zinc-500">Current balance</p>
+                <p className="text-[11px] text-zinc-500">PaySim & IEEE-CIS Ingested</p>
                 <div className="text-2xl font-bold font-sans text-white tracking-tight">
-                  $25,895.00
+                  {stats?.total_alerts?.toLocaleString() || "1,000"}
                 </div>
               </div>
             </div>
 
-            {/* Percentage Pill */}
-            <div className="pill-badge pill-green">
-              +1.25%
+            <div className="pill-badge pill-blue">
+              {stats?.new_alerts || 0} Pending Review
             </div>
           </div>
 
-          {/* Card 2: Revenue */}
+          {/* Card 2: High Risk Queue */}
           <div className="ref-card flex items-center justify-between p-5">
             <div className="flex items-center gap-5">
-              {/* Circular Ring SVG */}
               <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
                 <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="24" fill="transparent" stroke="#222226" strokeWidth="5" />
                   <circle
                     cx="32"
                     cy="32"
                     r="24"
                     fill="transparent"
-                    stroke="#222226"
-                    strokeWidth="5"
-                  />
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="24"
-                    fill="transparent"
-                    stroke="#3b82f6"
+                    stroke="#ef4444"
                     strokeWidth="5"
                     strokeDasharray="150"
                     strokeDashoffset="65"
@@ -243,51 +225,55 @@ export default function DashboardPage() {
                 </svg>
               </div>
 
-              {/* Metric Details */}
               <div className="space-y-0.5">
                 <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">
-                  Revenue
+                  Tier 1 Critical Alerts
                 </h3>
-                <p className="text-[11px] text-zinc-500">Current balance</p>
-                <div className="text-2xl font-bold font-sans text-white tracking-tight">
-                  $8,325.00
+                <p className="text-[11px] text-zinc-500">Risk Score ≥ 0.70 Threshold</p>
+                <div className="text-2xl font-bold font-sans text-rose-400 tracking-tight">
+                  {stats?.high_risk_count?.toLocaleString() || "156"}
                 </div>
               </div>
             </div>
 
-            {/* Percentage Pill */}
-            <div className="pill-badge pill-green">
-              +4.25%
+            <div className="pill-badge pill-rose">
+              High Priority
             </div>
           </div>
 
         </div>
 
-        {/* ── Middle Row: Balance Overview Chart & Transactions ────────────── */}
+        {/* ── Middle Row: Ingestion Velocity Chart & Priority Alerts ──────── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
           
-          {/* Left Wide Card: Balance Overview Bar Chart (8 cols) */}
+          {/* Left Card: Anomaly Velocity Distribution (8 cols) */}
           <div className="lg:col-span-8 ref-card flex flex-col justify-between p-6">
             <div>
-              <h2 className="text-base font-semibold text-zinc-100 tracking-tight">
-                Balance overview
-              </h2>
-              <p className="text-xs text-zinc-400 mt-1">
-                A clear snapshot of your current account balance over the last months.
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-100 tracking-tight">
+                    Transaction Anomaly Velocity
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Temporal distribution of anomalous transactions across ingested PaySim and IEEE-CIS datasets.
+                  </p>
+                </div>
+                <span className="pill-badge pill-blue text-[10px]">
+                  Real-Time Scrape
+                </span>
+              </div>
             </div>
 
             {/* Dense Blue Vertical Bar Chart */}
             <div className="mt-8 pt-4">
               <div className="h-44 flex items-end justify-between gap-1.5 px-1 pb-2">
-                {BAR_DATA.map((bar, i) => (
+                {VELOCITY_DATA.map((bar, i) => (
                   <div
                     key={i}
                     className="flex-1 flex flex-col items-center justify-end h-full group relative"
                   >
-                    {/* Tooltip on Hover */}
                     <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-zinc-900 text-zinc-200 text-[10px] py-0.5 px-1.5 rounded border border-zinc-700 whitespace-nowrap z-20">
-                      {bar.day}: ${(bar.height * 280).toLocaleString()}
+                      {bar.day}: {Math.round(bar.height * 12)} anomalies
                     </div>
 
                     <div
@@ -298,144 +284,95 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* X-Axis Labels */}
               <div className="flex items-center justify-between text-[11px] text-zinc-500 font-sans pt-3 border-t border-[#222226] px-1">
-                <span>Apr 1</span>
-                <span>Apr 6</span>
-                <span>Apr 11</span>
-                <span>Apr 16</span>
-                <span>Apr 21</span>
-                <span>Apr 26</span>
-                <span>May 1</span>
-                <span>May 6</span>
-                <span>May 11</span>
-                <span>May 16</span>
+                <span>Window Start</span>
+                <span>T + 5 Days</span>
+                <span>T + 10 Days</span>
+                <span>T + 15 Days</span>
+                <span>T + 20 Days</span>
+                <span>Window End</span>
               </div>
             </div>
           </div>
 
-          {/* Right Card: Transactions (4 cols) */}
+          {/* Right Card: High Priority Cases (4 cols) */}
           <div className="lg:col-span-4 ref-card flex flex-col justify-between p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-1 border-b border-[#222226]">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-xs font-serif">
-                    $
-                  </span>
+                  <AlertTriangle size={15} className="text-amber-400" />
                   <h3 className="text-sm font-semibold text-zinc-100">
-                    Transactions
+                    High-Risk Queue
                   </h3>
                 </div>
-                <button
-                  onClick={() => { setStatusFilter(""); setPage(1); }}
-                  className="text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1 transition"
-                >
-                  Last month <ChevronRight size={13} />
-                </button>
+                <span className="text-[10px] font-mono text-zinc-400">
+                  Top Priority
+                </span>
               </div>
 
-              {/* Transactions List */}
-              <div className="space-y-3.5">
-                {/* Item 1: Tax Refund */}
-                <div className="flex items-center justify-between py-1 group">
-                  <div className="flex items-center gap-3">
-                    {/* Mastercard Style Red/Orange Circles */}
-                    <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center relative shrink-0">
-                      <div className="w-3.5 h-3.5 rounded-full bg-red-500/80 -mr-1.5" />
-                      <div className="w-3.5 h-3.5 rounded-full bg-amber-500/80" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-medium text-zinc-100 leading-snug">
-                        Tax Refund
-                      </h4>
-                      <p className="text-[11px] text-zinc-500">
-                        2024 Income Tax Refund
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-emerald-400 block">
-                      +$542.00
-                    </span>
-                    <span className="text-[10px] text-zinc-500">Dec 20</span>
-                  </div>
-                </div>
-
-                {/* Item 2: Freelance Payment */}
-                <div className="flex items-center justify-between py-1 group">
-                  <div className="flex items-center gap-3">
-                    {/* PayPal Style Blue Icon */}
-                    <div className="w-8 h-8 rounded-lg bg-blue-950/40 border border-blue-900/40 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">
-                      P
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-medium text-zinc-100 leading-snug">
-                        Freelance Payment
-                      </h4>
-                      <p className="text-[11px] text-zinc-500 truncate max-w-[130px]">
-                        Payment for invoice #INV-4421
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-rose-400 block">
-                      -$800.00
-                    </span>
-                    <span className="text-[10px] text-zinc-500">Dec 14</span>
-                  </div>
-                </div>
-
-                {/* Item 3: Salary Payment */}
-                <div className="flex items-center justify-between py-1 group">
-                  <div className="flex items-center gap-3">
-                    {/* Visa Blue Card Icon */}
-                    <div className="w-8 h-8 rounded-lg bg-indigo-950/40 border border-indigo-900/40 flex items-center justify-center text-indigo-400 text-[10px] font-bold shrink-0">
-                      VISA
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-medium text-zinc-100 leading-snug">
-                        Salary Payment
-                      </h4>
-                      <p className="text-[11px] text-zinc-500 truncate max-w-[130px]">
-                        Acme Corporation SRL
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-semibold text-rose-400 block">
-                      -$2500.00
-                    </span>
-                    <span className="text-[10px] text-zinc-500">Dec 01</span>
-                  </div>
-                </div>
+              {/* Priority Alerts List */}
+              <div className="space-y-3">
+                {priorityCases.length > 0 ? (
+                  priorityCases.map((c) => (
+                    <Link
+                      key={c.id}
+                      href={`/alerts/${c.id}`}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-[#141417] hover:bg-[#1a1a1f] border border-[#222226] transition group"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-mono font-medium text-zinc-100 truncate">
+                            {c.account_id || "Account"}
+                          </span>
+                          <span className="pill-badge pill-rose text-[9px] py-0 px-1.5">
+                            {Math.round((c.risk_score || 0.8) * 100)}%
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-500 truncate capitalize mt-0.5">
+                          {(c.typology || "unclassified").replace(/_/g, " ")}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono font-medium text-emerald-400 block">
+                          {formatCurrency(c.amount)}
+                        </span>
+                        <span className="text-[10px] text-blue-400 flex items-center justify-end gap-0.5 group-hover:underline">
+                          Inspect <ChevronRight size={10} />
+                        </span>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-xs text-zinc-500 py-6 text-center">Loading priority queue...</p>
+                )}
               </div>
             </div>
 
-            {/* View All Button */}
             <button
               onClick={() => {
-                const el = document.getElementById("payments-section");
+                const el = document.getElementById("alerts-table-section");
                 el?.scrollIntoView({ behavior: "smooth" });
               }}
               className="w-full mt-4 py-2 rounded-xl bg-[#202024] hover:bg-[#27272c] text-zinc-300 text-xs font-medium transition text-center"
             >
-              View all
+              View complete ledger ({totalAlerts.toLocaleString()})
             </button>
           </div>
 
         </div>
 
-        {/* ── Bottom Section: Payments / Case Intake Ledger ────────────────── */}
-        <section id="payments-section" className="ref-card p-6 space-y-4">
-          <div className="flex items-center justify-between">
+        {/* ── Bottom Section: AML Intake Ledger Table ──────────────────────── */}
+        <section id="alerts-table-section" className="ref-card p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-zinc-100 tracking-tight">
-                Payments
+                Case Intake & Transaction Ledger
               </h2>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Manage your payments.
+                Complete searchable repository of flagged transaction anomalies across datasets.
               </p>
             </div>
+            
             <button
               onClick={() => {
                 setStatusFilter("");
@@ -445,23 +382,23 @@ export default function DashboardPage() {
               }}
               className="ref-btn ref-btn-secondary text-xs"
             >
-              View all
+              Reset Filters
             </button>
           </div>
 
           {/* Filter Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
             <div className="flex items-center gap-2.5 flex-1 max-w-md">
               <div className="relative w-full">
                 <input
                   type="text"
-                  placeholder="Filter emails, accounts..."
+                  placeholder="Search account, transaction ID..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setPage(1);
                   }}
-                  className="ref-input w-full pr-8 text-xs"
+                  className="ref-input w-full pr-8 text-xs font-mono"
                 />
                 <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
               </div>
@@ -480,7 +417,7 @@ export default function DashboardPage() {
                 <option value="">Status: All</option>
                 <option value="new">New (Pending)</option>
                 <option value="investigating">Under Review</option>
-                <option value="approved">Approved</option>
+                <option value="approved">Approved for SAR</option>
                 <option value="rejected">Dismissed</option>
               </select>
 
@@ -497,14 +434,16 @@ export default function DashboardPage() {
                 <option value="structuring">Structuring</option>
                 <option value="rapid_movement">Rapid Movement</option>
                 <option value="layering">Layering</option>
+                <option value="synthetic_identity">Synthetic Identity</option>
               </select>
 
               <button
                 onClick={() => fetchAlerts()}
                 className="ref-btn ref-btn-secondary text-xs flex items-center gap-1.5"
+                title="Refresh table data"
               >
-                <SlidersHorizontal size={13} />
-                <span>Columns</span>
+                <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+                <span>Refresh</span>
               </button>
             </div>
           </div>
@@ -514,37 +453,33 @@ export default function DashboardPage() {
             <table className="ref-table">
               <thead>
                 <tr>
-                  <th className="w-8">
-                    <input type="checkbox" className="rounded accent-blue-600 bg-zinc-900 border-zinc-700" />
-                  </th>
                   <th className="w-28">Status</th>
-                  <th>Email / Account</th>
-                  <th>Typology</th>
-                  <th className="w-28 text-right">Amount</th>
-                  <th className="w-20 text-right">Action</th>
+                  <th>Primary Account</th>
+                  <th>Assigned Typology</th>
+                  <th className="w-28">Risk Score</th>
+                  <th className="w-28 text-right">Amount (USD)</th>
+                  <th className="w-28 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="text-center py-10 text-zinc-500 font-sans text-xs">
-                      Loading payments and ledger records...
+                      Loading ledger records from database...
                     </td>
                   </tr>
                 ) : alerts.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-10 text-zinc-500 font-sans text-xs">
-                      No matching records found.
+                      No matching transaction records found.
                     </td>
                   </tr>
                 ) : (
                   alerts.map((alert) => {
                     const status = (alert.status || "new").toLowerCase();
+                    const risk = alert.risk_score || 0;
                     return (
                       <tr key={alert.id} className="group">
-                        <td>
-                          <input type="checkbox" className="rounded accent-blue-600 bg-zinc-900 border-zinc-700" />
-                        </td>
                         <td>
                           {status === "approved" ? (
                             <span className="pill-badge pill-green">Approved</span>
@@ -553,13 +488,13 @@ export default function DashboardPage() {
                           ) : status === "rejected" ? (
                             <span className="pill-badge pill-rose">Dismissed</span>
                           ) : (
-                            <span className="pill-badge pill-blue">New</span>
+                            <span className="pill-badge pill-blue">New Case</span>
                           )}
                         </td>
                         <td>
                           <div className="flex flex-col">
                             <span className="font-mono text-zinc-200 text-xs font-medium">
-                              {alert.account_id || "m@example.com"}
+                              {alert.account_id || "Unidentified Account"}
                             </span>
                             <span className="text-[10px] text-zinc-500 font-mono">
                               Tx #{alert.transaction_id || alert.id.slice(0, 8)} • {formatDate(alert.timestamp)}
@@ -567,20 +502,25 @@ export default function DashboardPage() {
                           </div>
                         </td>
                         <td>
-                          <span className="text-xs text-zinc-400 capitalize">
+                          <span className="text-xs text-zinc-300 capitalize font-medium">
                             {(alert.typology || "unclassified").replace(/_/g, " ")}
                           </span>
                         </td>
-                        <td className="text-right font-medium text-zinc-200 text-xs font-mono">
+                        <td>
+                          <span className={`pill-badge ${risk >= 0.7 ? "pill-rose" : risk >= 0.4 ? "pill-amber" : "pill-green"}`}>
+                            {Math.round(risk * 100)}%
+                          </span>
+                        </td>
+                        <td className="text-right font-medium text-emerald-400 text-xs font-mono">
                           {formatCurrency(alert.amount)}
                         </td>
                         <td className="text-right">
                           <Link
                             href={`/alerts/${alert.id}`}
-                            className="ref-btn ref-btn-secondary text-[11px] py-1 px-2.5 inline-flex opacity-80 group-hover:opacity-100"
+                            className="ref-btn ref-btn-secondary text-[11px] py-1 px-2.5 inline-flex opacity-85 group-hover:opacity-100 group-hover:border-blue-500/50"
                           >
-                            <Eye size={12} />
-                            View
+                            <Eye size={12} className="text-blue-400" />
+                            Case File
                           </Link>
                         </td>
                       </tr>
@@ -592,9 +532,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between pt-3 border-t border-[#222226] text-xs text-zinc-500">
+          <div className="flex items-center justify-between pt-3 border-t border-[#222226] text-xs text-zinc-500 font-mono">
             <span>
-              Page {page} of {totalPages} ({totalAlerts} total results)
+              Page {page} of {totalPages} ({totalAlerts.toLocaleString()} total alerts)
             </span>
             <div className="flex items-center gap-2">
               <button
