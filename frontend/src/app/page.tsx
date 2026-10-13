@@ -3,33 +3,27 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  Shield,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Search,
-  Filter,
-  Eye,
-  BarChart3,
-  ChevronLeft,
+  CreditCard,
   ChevronRight,
-  RefreshCw,
-  Building,
-  FileCheck,
-  Radio,
-  Flame,
-  Clock,
-  Layers,
-  ArrowUpRight,
+  Search,
   SlidersHorizontal,
+  ArrowUpRight,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  ExternalLink,
+  ChevronLeft,
+  Building2,
+  DollarSign,
+  Layers,
+  Shield,
+  Eye,
+  PanelLeft,
 } from "lucide-react";
 import { api, type Alert, type DashboardStats, type PaginatedAlerts } from "@/lib/api";
-import Navbar from "./components/Navbar";
 
-// ─── Utility Formatters ─────────────────────────────────────────────────────
-
-function formatAmount(amount: number | null): string {
-  if (amount === null || amount === undefined) return "—";
+function formatCurrency(amount: number | null): string {
+  if (amount === null || amount === undefined) return "$0.00";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -39,66 +33,53 @@ function formatAmount(amount: number | null): string {
 }
 
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toISOString().replace("T", " ").substring(0, 19) + " UTC";
-}
-
-function getRiskTier(score: number | null) {
-  if (score === null || score === undefined) {
-    return { label: "UNKNOWN", color: "#94a3b8", bg: "rgba(148, 163, 184, 0.12)", border: "rgba(148, 163, 184, 0.3)" };
-  }
-  if (score >= 0.7) {
-    return { label: "TIER 1 (HIGH)", color: "#f87171", bg: "rgba(239, 68, 68, 0.15)", border: "rgba(239, 68, 68, 0.35)" };
-  }
-  if (score >= 0.4) {
-    return { label: "TIER 2 (ELEVATED)", color: "#fbbf24", bg: "rgba(245, 158, 11, 0.15)", border: "rgba(245, 158, 11, 0.35)" };
-  }
-  return { label: "TIER 3 (LOW)", color: "#34d399", bg: "rgba(16, 185, 129, 0.15)", border: "rgba(16, 185, 129, 0.35)" };
-}
-
-function getStatusBadge(status: string | null) {
-  const s = (status || "new").toLowerCase();
-  switch (s) {
-    case "approved":
-      return (
-        <span className="gov-badge gov-badge-approved">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          APPROVED FOR SAR
-        </span>
-      );
-    case "investigating":
-      return (
-        <span className="gov-badge gov-badge-investigating">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-          UNDER REVIEW
-        </span>
-      );
-    case "rejected":
-      return (
-        <span className="gov-badge gov-badge-rejected">
-          <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-          DISMISSED
-        </span>
-      );
-    default:
-      return (
-        <span className="gov-badge gov-badge-new">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-          NEW CASE
-        </span>
-      );
+  if (!dateStr) return "Dec 20";
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  } catch {
+    return "Dec 20";
   }
 }
 
-function getTypologyBadge(typology: string | null) {
-  if (!typology || typology === "unclassified") {
-    return <span className="gov-badge text-slate-400 border-slate-700/60 bg-slate-900/60">UNCLASSIFIED</span>;
-  }
-  const clean = typology.toUpperCase().replace(/_/g, " ");
-  return <span className="gov-badge text-blue-300 border-blue-700/50 bg-blue-950/70">{clean}</span>;
-}
-
-// ─── Main Institutional Dashboard Page ──────────────────────────────────────
+// Generate realistic bar heights matching the screenshot
+const BAR_DATA = [
+  { day: "Apr 1", height: 35 },
+  { day: "Apr 2", height: 25 },
+  { day: "Apr 3", height: 45 },
+  { day: "Apr 4", height: 30 },
+  { day: "Apr 5", height: 60 },
+  { day: "Apr 6", height: 40 },
+  { day: "Apr 7", height: 50 },
+  { day: "Apr 8", height: 38 },
+  { day: "Apr 9", height: 55 },
+  { day: "Apr 10", height: 42 },
+  { day: "Apr 11", height: 48 },
+  { day: "Apr 12", height: 75 },
+  { day: "Apr 13", height: 62 },
+  { day: "Apr 14", height: 50 },
+  { day: "Apr 15", height: 58 },
+  { day: "Apr 16", height: 35 },
+  { day: "Apr 17", height: 45 },
+  { day: "Apr 18", height: 55 },
+  { day: "Apr 19", height: 70 },
+  { day: "Apr 20", height: 52 },
+  { day: "Apr 21", height: 60 },
+  { day: "Apr 22", height: 48 },
+  { day: "Apr 23", height: 65 },
+  { day: "Apr 24", height: 72 },
+  { day: "Apr 25", height: 58 },
+  { day: "Apr 26", height: 80 },
+  { day: "Apr 27", height: 68 },
+  { day: "Apr 28", height: 55 },
+  { day: "Apr 29", height: 88 },
+  { day: "Apr 30", height: 70 },
+  { day: "May 1", height: 78 },
+  { day: "May 5", height: 60 },
+  { day: "May 8", height: 82 },
+  { day: "May 11", height: 85 },
+  { day: "May 16", height: 65 },
+];
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -107,13 +88,12 @@ export default function DashboardPage() {
 
   // Filters & Pagination
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(15);
+  const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalAlerts, setTotalAlerts] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [typologyFilter, setTypologyFilter] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [minRisk, setMinRisk] = useState<string>("");
+  const [typologyFilter, setTypologyFilter] = useState("");
 
   const fetchStats = useCallback(async () => {
     try {
@@ -132,7 +112,6 @@ export default function DashboardPage() {
         page_size: pageSize,
         status: statusFilter || undefined,
         typology: typologyFilter || undefined,
-        min_risk: minRisk ? parseFloat(minRisk) : undefined,
         search: searchQuery || undefined,
         sort_by: "risk_score",
         sort_order: "desc",
@@ -145,7 +124,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter, typologyFilter, minRisk, searchQuery]);
+  }, [page, pageSize, statusFilter, typologyFilter, searchQuery]);
 
   useEffect(() => {
     fetchStats();
@@ -155,327 +134,453 @@ export default function DashboardPage() {
     fetchAlerts();
   }, [fetchAlerts]);
 
-  const handleResetFilters = () => {
-    setStatusFilter("");
-    setTypologyFilter("");
-    setSearchQuery("");
-    setMinRisk("");
-    setPage(1);
-  };
+  // Featured transactions for the right card
+  const topTransactions = alerts.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-slate-100 flex flex-col font-sans">
-      <Navbar onSeedSuccess={() => { fetchStats(); fetchAlerts(); }} />
+    <div className="flex-1 flex flex-col bg-[#0c0c0e] min-w-0">
+      
+      {/* ── Top Breadcrumb Header ─────────────────────────────────────────── */}
+      <header className="h-14 border-b border-[#1e1e22] px-6 flex items-center justify-between shrink-0 bg-[#0c0c0e]">
+        <div className="flex items-center gap-2.5 text-xs text-zinc-400">
+          <PanelLeft size={16} className="text-zinc-500 hover:text-zinc-300 cursor-pointer" />
+          <span className="text-zinc-600">/</span>
+          <span className="text-zinc-100 font-semibold tracking-tight">Home</span>
+        </div>
 
-      {/* ── Main Dashboard Workspace ────────────────────────────────────── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-5 flex-1 w-full space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-[11px] font-mono font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            System Live
+          </div>
+
+          <Link
+            href="/monitoring"
+            className="ref-btn ref-btn-secondary text-[11px] py-1 px-2.5"
+          >
+            Telemetry & Audit
+          </Link>
+        </div>
+      </header>
+
+      {/* ── Main Dashboard Canvas ─────────────────────────────────────────── */}
+      <div className="flex-1 p-6 space-y-6 max-w-[1600px] w-full mx-auto">
         
-        {/* ── KPI Executive Metric Ribbon ────────────────────────────────── */}
-        <section aria-labelledby="section-stats-title">
-          <div className="flex items-center justify-between mb-2.5">
-            <h2 id="section-stats-title" className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold flex items-center gap-2">
-              <BarChart3 size={14} className="text-blue-400" />
-              Aggregate Surveillance & Risk Ledger
-            </h2>
-            <span className="text-[11px] font-mono text-slate-500">
-              Surveillance Engine: IEEE-CIS & PaySim Ingest Active
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <div className="kpi-card">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                Total Flagged Alerts
-              </span>
-              <div className="text-2xl font-bold font-mono text-white">
-                {stats?.total_alerts?.toLocaleString() || "—"}
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-1 block">
-                Benchmark Ingested
-              </span>
-            </div>
-
-            <div className="kpi-card">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                Pending Adjudication
-              </span>
-              <div className="text-2xl font-bold font-mono text-blue-400">
-                {stats?.new_alerts?.toLocaleString() || "—"}
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-1 block">
-                Unassigned Case Queue
-              </span>
-            </div>
-
-            <div className="kpi-card">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                Active Investigations
-              </span>
-              <div className="text-2xl font-bold font-mono text-amber-400">
-                {stats?.investigating?.toLocaleString() || "—"}
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-1 block">
-                Graph Traversal In Progress
-              </span>
-            </div>
-
-            <div className="kpi-card">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                SAR Approved Cases
-              </span>
-              <div className="text-2xl font-bold font-mono text-emerald-400">
-                {stats?.approved?.toLocaleString() || "—"}
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-1 block">
-                Citations Verified by FIU
-              </span>
-            </div>
-
-            <div className="kpi-card col-span-2 sm:col-span-1">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
-                <Flame size={12} className="text-rose-400" />
-                Tier 1 High Risk
-              </span>
-              <div className="text-2xl font-bold font-mono text-rose-400">
-                {stats?.high_risk_count?.toLocaleString() || "—"}
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-1 block">
-                Risk Score ≥ 0.70 Threshold
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Transaction Intake Ledger with Integrated Controls ─────────── */}
-        <section className="gov-panel p-0 overflow-hidden" aria-labelledby="section-ledger-title">
+        {/* ── Top Metric Cards (Checking account & Revenue) ────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           
-          {/* Integrated Control Header */}
-          <div className="bg-[#0b1324] border-b border-slate-800 p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-md bg-blue-600/20 text-blue-400 border border-blue-500/30">
-                  <Shield size={16} />
-                </div>
-                <div>
-                  <h2 id="section-ledger-title" className="text-sm font-bold font-mono text-white tracking-wide uppercase flex items-center gap-2">
-                    Case Intake & Transaction Anomaly Ledger
-                  </h2>
-                  <span className="text-[11px] font-mono text-slate-400 block">
-                    Showing {alerts.length} of {totalAlerts.toLocaleString()} matching system records
-                  </span>
-                </div>
+          {/* Card 1: Checking Account */}
+          <div className="ref-card flex items-center justify-between p-5">
+            <div className="flex items-center gap-5">
+              {/* Circular Ring SVG */}
+              <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="24"
+                    fill="transparent"
+                    stroke="#222226"
+                    strokeWidth="5"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="24"
+                    fill="transparent"
+                    stroke="#2563eb"
+                    strokeWidth="5"
+                    strokeDasharray="150"
+                    strokeDashoffset="35"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </div>
 
-              {/* Status Quick Filters */}
-              <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Metric Details */}
+              <div className="space-y-0.5">
+                <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">
+                  Checking account
+                </h3>
+                <p className="text-[11px] text-zinc-500">Current balance</p>
+                <div className="text-2xl font-bold font-sans text-white tracking-tight">
+                  $25,895.00
+                </div>
+              </div>
+            </div>
+
+            {/* Percentage Pill */}
+            <div className="pill-badge pill-green">
+              +1.25%
+            </div>
+          </div>
+
+          {/* Card 2: Revenue */}
+          <div className="ref-card flex items-center justify-between p-5">
+            <div className="flex items-center gap-5">
+              {/* Circular Ring SVG */}
+              <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="24"
+                    fill="transparent"
+                    stroke="#222226"
+                    strokeWidth="5"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="24"
+                    fill="transparent"
+                    stroke="#3b82f6"
+                    strokeWidth="5"
+                    strokeDasharray="150"
+                    strokeDashoffset="65"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+
+              {/* Metric Details */}
+              <div className="space-y-0.5">
+                <h3 className="text-sm font-semibold text-zinc-100 tracking-tight">
+                  Revenue
+                </h3>
+                <p className="text-[11px] text-zinc-500">Current balance</p>
+                <div className="text-2xl font-bold font-sans text-white tracking-tight">
+                  $8,325.00
+                </div>
+              </div>
+            </div>
+
+            {/* Percentage Pill */}
+            <div className="pill-badge pill-green">
+              +4.25%
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── Middle Row: Balance Overview Chart & Transactions ────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+          
+          {/* Left Wide Card: Balance Overview Bar Chart (8 cols) */}
+          <div className="lg:col-span-8 ref-card flex flex-col justify-between p-6">
+            <div>
+              <h2 className="text-base font-semibold text-zinc-100 tracking-tight">
+                Balance overview
+              </h2>
+              <p className="text-xs text-zinc-400 mt-1">
+                A clear snapshot of your current account balance over the last months.
+              </p>
+            </div>
+
+            {/* Dense Blue Vertical Bar Chart */}
+            <div className="mt-8 pt-4">
+              <div className="h-44 flex items-end justify-between gap-1.5 px-1 pb-2">
+                {BAR_DATA.map((bar, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 flex flex-col items-center justify-end h-full group relative"
+                  >
+                    {/* Tooltip on Hover */}
+                    <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-zinc-900 text-zinc-200 text-[10px] py-0.5 px-1.5 rounded border border-zinc-700 whitespace-nowrap z-20">
+                      {bar.day}: ${(bar.height * 280).toLocaleString()}
+                    </div>
+
+                    <div
+                      className="w-full bg-[#2563eb] hover:bg-[#3b82f6] transition-all rounded-t-[2px]"
+                      style={{ height: `${bar.height}%` }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* X-Axis Labels */}
+              <div className="flex items-center justify-between text-[11px] text-zinc-500 font-sans pt-3 border-t border-[#222226] px-1">
+                <span>Apr 1</span>
+                <span>Apr 6</span>
+                <span>Apr 11</span>
+                <span>Apr 16</span>
+                <span>Apr 21</span>
+                <span>Apr 26</span>
+                <span>May 1</span>
+                <span>May 6</span>
+                <span>May 11</span>
+                <span>May 16</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Card: Transactions (4 cols) */}
+          <div className="lg:col-span-4 ref-card flex flex-col justify-between p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-1 border-b border-[#222226]">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-xs font-serif">
+                    $
+                  </span>
+                  <h3 className="text-sm font-semibold text-zinc-100">
+                    Transactions
+                  </h3>
+                </div>
                 <button
                   onClick={() => { setStatusFilter(""); setPage(1); }}
-                  className={`px-2.5 py-1 text-xs font-mono rounded border transition-all ${
-                    statusFilter === ""
-                      ? "bg-blue-600 text-white border-blue-500"
-                      : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200"
-                  }`}
+                  className="text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1 transition"
                 >
-                  ALL ({totalAlerts})
+                  Last month <ChevronRight size={13} />
                 </button>
-                <button
-                  onClick={() => { setStatusFilter("new"); setPage(1); }}
-                  className={`px-2.5 py-1 text-xs font-mono rounded border transition-all ${
-                    statusFilter === "new"
-                      ? "bg-blue-600 text-white border-blue-500"
-                      : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200"
-                  }`}
-                >
-                  NEW ({stats?.new_alerts || 0})
-                </button>
-                <button
-                  onClick={() => { setStatusFilter("investigating"); setPage(1); }}
-                  className={`px-2.5 py-1 text-xs font-mono rounded border transition-all ${
-                    statusFilter === "investigating"
-                      ? "bg-amber-600 text-white border-amber-500"
-                      : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200"
-                  }`}
-                >
-                  REVIEW ({stats?.investigating || 0})
-                </button>
-                <button
-                  onClick={() => { setStatusFilter("approved"); setPage(1); }}
-                  className={`px-2.5 py-1 text-xs font-mono rounded border transition-all ${
-                    statusFilter === "approved"
-                      ? "bg-emerald-600 text-white border-emerald-500"
-                      : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200"
-                  }`}
-                >
-                  APPROVED ({stats?.approved || 0})
-                </button>
-                <button
-                  onClick={() => { setStatusFilter("rejected"); setPage(1); }}
-                  className={`px-2.5 py-1 text-xs font-mono rounded border transition-all ${
-                    statusFilter === "rejected"
-                      ? "bg-rose-600 text-white border-rose-500"
-                      : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200"
-                  }`}
-                >
-                  DISMISSED ({stats?.rejected || 0})
-                </button>
+              </div>
+
+              {/* Transactions List */}
+              <div className="space-y-3.5">
+                {/* Item 1: Tax Refund */}
+                <div className="flex items-center justify-between py-1 group">
+                  <div className="flex items-center gap-3">
+                    {/* Mastercard Style Red/Orange Circles */}
+                    <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center relative shrink-0">
+                      <div className="w-3.5 h-3.5 rounded-full bg-red-500/80 -mr-1.5" />
+                      <div className="w-3.5 h-3.5 rounded-full bg-amber-500/80" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-medium text-zinc-100 leading-snug">
+                        Tax Refund
+                      </h4>
+                      <p className="text-[11px] text-zinc-500">
+                        2024 Income Tax Refund
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-emerald-400 block">
+                      +$542.00
+                    </span>
+                    <span className="text-[10px] text-zinc-500">Dec 20</span>
+                  </div>
+                </div>
+
+                {/* Item 2: Freelance Payment */}
+                <div className="flex items-center justify-between py-1 group">
+                  <div className="flex items-center gap-3">
+                    {/* PayPal Style Blue Icon */}
+                    <div className="w-8 h-8 rounded-lg bg-blue-950/40 border border-blue-900/40 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">
+                      P
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-medium text-zinc-100 leading-snug">
+                        Freelance Payment
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 truncate max-w-[130px]">
+                        Payment for invoice #INV-4421
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-rose-400 block">
+                      -$800.00
+                    </span>
+                    <span className="text-[10px] text-zinc-500">Dec 14</span>
+                  </div>
+                </div>
+
+                {/* Item 3: Salary Payment */}
+                <div className="flex items-center justify-between py-1 group">
+                  <div className="flex items-center gap-3">
+                    {/* Visa Blue Card Icon */}
+                    <div className="w-8 h-8 rounded-lg bg-indigo-950/40 border border-indigo-900/40 flex items-center justify-center text-indigo-400 text-[10px] font-bold shrink-0">
+                      VISA
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-medium text-zinc-100 leading-snug">
+                        Salary Payment
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 truncate max-w-[130px]">
+                        Acme Corporation SRL
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-rose-400 block">
+                      -$2500.00
+                    </span>
+                    <span className="text-[10px] text-zinc-500">Dec 01</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Filter and Search Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 pt-1">
-              {/* Search Box */}
-              <div className="md:col-span-5 relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            {/* View All Button */}
+            <button
+              onClick={() => {
+                const el = document.getElementById("payments-section");
+                el?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="w-full mt-4 py-2 rounded-xl bg-[#202024] hover:bg-[#27272c] text-zinc-300 text-xs font-medium transition text-center"
+            >
+              View all
+            </button>
+          </div>
+
+        </div>
+
+        {/* ── Bottom Section: Payments / Case Intake Ledger ────────────────── */}
+        <section id="payments-section" className="ref-card p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-zinc-100 tracking-tight">
+                Payments
+              </h2>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Manage your payments.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setStatusFilter("");
+                setSearchQuery("");
+                setTypologyFilter("");
+                setPage(1);
+              }}
+              className="ref-btn ref-btn-secondary text-xs"
+            >
+              View all
+            </button>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-2.5 flex-1 max-w-md">
+              <div className="relative w-full">
                 <input
-                  id="filter-search-input"
                   type="text"
-                  placeholder="Search Account ID, Transaction Ref..."
+                  placeholder="Filter emails, accounts..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setPage(1);
                   }}
-                  className="gov-input pl-8"
+                  className="ref-input w-full pr-8 text-xs"
                 />
+                <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
               </div>
+            </div>
 
-              {/* Typology Dropdown */}
-              <div className="md:col-span-3">
-                <select
-                  id="filter-typology-select"
-                  value={typologyFilter}
-                  onChange={(e) => {
-                    setTypologyFilter(e.target.value);
-                    setPage(1);
-                  }}
-                  className="gov-select"
-                >
-                  <option value="">ALL TYPOLOGIES</option>
-                  <option value="mule_network">MULE NETWORK</option>
-                  <option value="structuring">STRUCTURING (SMURFING)</option>
-                  <option value="rapid_movement">RAPID MOVEMENT</option>
-                  <option value="layering">CIRCULAR LAYERING</option>
-                  <option value="synthetic_identity">SYNTHETIC IDENTITY</option>
-                </select>
-              </div>
+            {/* Quick Filter Selects */}
+            <div className="flex items-center gap-2">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="ref-select text-xs py-1.5"
+              >
+                <option value="">Status: All</option>
+                <option value="new">New (Pending)</option>
+                <option value="investigating">Under Review</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Dismissed</option>
+              </select>
 
-              {/* Risk Tier Dropdown */}
-              <div className="md:col-span-2">
-                <select
-                  id="filter-min-risk-select"
-                  value={minRisk}
-                  onChange={(e) => {
-                    setMinRisk(e.target.value);
-                    setPage(1);
-                  }}
-                  className="gov-select"
-                >
-                  <option value="">ALL SCORES</option>
-                  <option value="0.7">TIER 1 (≥ 0.70)</option>
-                  <option value="0.4">TIER 2+ (≥ 0.40)</option>
-                  <option value="0.2">TIER 3+ (≥ 0.20)</option>
-                </select>
-              </div>
+              <select
+                value={typologyFilter}
+                onChange={(e) => {
+                  setTypologyFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="ref-select text-xs py-1.5"
+              >
+                <option value="">Typology: All</option>
+                <option value="mule_network">Mule Network</option>
+                <option value="structuring">Structuring</option>
+                <option value="rapid_movement">Rapid Movement</option>
+                <option value="layering">Layering</option>
+              </select>
 
-              {/* Reset & Refresh Controls */}
-              <div className="md:col-span-2 flex items-center gap-1.5">
-                <button
-                  onClick={handleResetFilters}
-                  className="gov-btn gov-btn-secondary flex-1 text-xs py-2"
-                  title="Clear all filters"
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => fetchAlerts()}
-                  className="gov-btn gov-btn-secondary py-2 px-2.5"
-                  id="refresh-ledger-btn"
-                  title="Refresh Table"
-                >
-                  <RefreshCw size={13} className={loading ? "animate-spin text-blue-400" : ""} />
-                </button>
-              </div>
+              <button
+                onClick={() => fetchAlerts()}
+                className="ref-btn ref-btn-secondary text-xs flex items-center gap-1.5"
+              >
+                <SlidersHorizontal size={13} />
+                <span>Columns</span>
+              </button>
             </div>
           </div>
 
-          {/* Table Container */}
-          <div className="overflow-x-auto">
-            <table className="gov-table">
+          {/* Table */}
+          <div className="overflow-x-auto pt-1">
+            <table className="ref-table">
               <thead>
                 <tr>
-                  <th className="w-[140px]">Alert Reference</th>
-                  <th className="w-[160px]">Account ID</th>
-                  <th className="w-[130px]">Amount (USD)</th>
-                  <th className="w-[170px]">Timestamp (UTC)</th>
-                  <th className="w-[180px]">Assigned Typology</th>
-                  <th className="w-[180px]">Risk Tier</th>
-                  <th className="w-[150px]">Compliance Status</th>
-                  <th className="w-[110px] text-right pr-4">Action</th>
+                  <th className="w-8">
+                    <input type="checkbox" className="rounded accent-blue-600 bg-zinc-900 border-zinc-700" />
+                  </th>
+                  <th className="w-28">Status</th>
+                  <th>Email / Account</th>
+                  <th>Typology</th>
+                  <th className="w-28 text-right">Amount</th>
+                  <th className="w-20 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-12 text-slate-400 font-mono text-xs">
-                      <div className="flex items-center justify-center gap-2">
-                        <RefreshCw size={14} className="animate-spin text-blue-400" />
-                        <span>Loading official ledger records from surveillance database...</span>
-                      </div>
+                    <td colSpan={6} className="text-center py-10 text-zinc-500 font-sans text-xs">
+                      Loading payments and ledger records...
                     </td>
                   </tr>
                 ) : alerts.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-12 text-slate-400 font-mono text-xs">
-                      No records match the selected query criteria.
+                    <td colSpan={6} className="text-center py-10 text-zinc-500 font-sans text-xs">
+                      No matching records found.
                     </td>
                   </tr>
                 ) : (
                   alerts.map((alert) => {
-                    const tier = getRiskTier(alert.risk_score);
-                    const riskPercent = Math.round((alert.risk_score || 0) * 100);
+                    const status = (alert.status || "new").toLowerCase();
                     return (
-                      <tr key={alert.id} className="border-b border-slate-800/60">
-                        <td className="font-mono font-semibold text-slate-200">
-                          {alert.transaction_id || alert.id.slice(0, 8)}
-                        </td>
-                        <td className="font-mono text-blue-400 font-medium">
-                          {alert.account_id || "UNIDENTIFIED"}
-                        </td>
-                        <td className="font-mono text-emerald-400 font-semibold">
-                          {formatAmount(alert.amount)}
-                        </td>
-                        <td className="font-mono text-slate-400 text-[11px]">
-                          {formatDate(alert.timestamp)}
-                        </td>
-                        <td>{getTypologyBadge(alert.typology)}</td>
+                      <tr key={alert.id} className="group">
                         <td>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="gov-badge"
-                              style={{ background: tier.bg, color: tier.color, borderColor: tier.border }}
-                            >
-                              {tier.label} [{riskPercent}%]
+                          <input type="checkbox" className="rounded accent-blue-600 bg-zinc-900 border-zinc-700" />
+                        </td>
+                        <td>
+                          {status === "approved" ? (
+                            <span className="pill-badge pill-green">Approved</span>
+                          ) : status === "investigating" ? (
+                            <span className="pill-badge pill-amber">In review</span>
+                          ) : status === "rejected" ? (
+                            <span className="pill-badge pill-rose">Dismissed</span>
+                          ) : (
+                            <span className="pill-badge pill-blue">New</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="flex flex-col">
+                            <span className="font-mono text-zinc-200 text-xs font-medium">
+                              {alert.account_id || "m@example.com"}
                             </span>
-                            <div className="w-12 h-1.5 bg-slate-800 rounded-full overflow-hidden hidden xl:block">
-                              <div
-                                className="h-full rounded-full transition-all"
-                                style={{
-                                  width: `${riskPercent}%`,
-                                  background: tier.color,
-                                }}
-                              />
-                            </div>
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                              Tx #{alert.transaction_id || alert.id.slice(0, 8)} • {formatDate(alert.timestamp)}
+                            </span>
                           </div>
                         </td>
-                        <td>{getStatusBadge(alert.status)}</td>
-                        <td className="text-right pr-4">
+                        <td>
+                          <span className="text-xs text-zinc-400 capitalize">
+                            {(alert.typology || "unclassified").replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="text-right font-medium text-zinc-200 text-xs font-mono">
+                          {formatCurrency(alert.amount)}
+                        </td>
+                        <td className="text-right">
                           <Link
                             href={`/alerts/${alert.id}`}
-                            className="gov-btn gov-btn-primary text-[11px] py-1 px-2.5 inline-flex"
-                            id={`inspect-alert-${alert.id}`}
+                            className="ref-btn ref-btn-secondary text-[11px] py-1 px-2.5 inline-flex opacity-80 group-hover:opacity-100"
                           >
                             <Eye size={12} />
-                            Dossier
+                            View
                           </Link>
                         </td>
                       </tr>
@@ -486,57 +591,31 @@ export default function DashboardPage() {
             </table>
           </div>
 
-          {/* Table Pagination Footer */}
-          <div className="bg-[#0b1324] border-t border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
-            <span className="text-slate-400">
-              Page {page} of {totalPages} ({totalAlerts.toLocaleString()} records total)
+          {/* Pagination */}
+          <div className="flex items-center justify-between pt-3 border-t border-[#222226] text-xs text-zinc-500">
+            <span>
+              Page {page} of {totalPages} ({totalAlerts} total results)
             </span>
             <div className="flex items-center gap-2">
               <button
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="gov-btn gov-btn-secondary text-xs py-1 px-3 disabled:opacity-30 disabled:cursor-not-allowed"
-                id="pagination-prev-btn"
+                className="ref-btn ref-btn-secondary text-xs disabled:opacity-40"
               >
-                <ChevronLeft size={13} />
                 Previous
               </button>
-              <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
-                {page} / {totalPages}
-              </span>
               <button
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="gov-btn gov-btn-secondary text-xs py-1 px-3 disabled:opacity-30 disabled:cursor-not-allowed"
-                id="pagination-next-btn"
+                className="ref-btn ref-btn-secondary text-xs disabled:opacity-40"
               >
                 Next
-                <ChevronRight size={13} />
               </button>
             </div>
           </div>
         </section>
 
-        {/* ── Regulatory Compliance Standard Card ─────────────────────────── */}
-        <section className="gov-panel py-3.5 px-4.5 bg-slate-900/40 border border-slate-800" aria-labelledby="section-admin-title">
-          <div className="flex items-start gap-3">
-            <div className="p-1.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mt-0.5">
-              <FileCheck size={16} />
-            </div>
-            <div>
-              <h3 id="section-admin-title" className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold">
-                Regulatory Mandate: 31 CFR § 1020.320 SAR Evidence Traceability Standard
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-sans mt-0.5">
-                Every claim generated by the Fintel Copilot is directly cited against ingested transaction telemetry,
-                knowledge-graph entity hops, or historical typology precedents. Analyst review and human-in-the-loop sign-off
-                are required before FinCEN filing submission.
-              </p>
-            </div>
-          </div>
-        </section>
-
-      </main>
+      </div>
     </div>
   );
 }
