@@ -17,13 +17,34 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — runs on startup and shutdown."""
-    # Startup
-    print(f"🚀 Fintel API starting — {settings.app_name} v{settings.app_version}")
-    print(f"   Database: {settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}")
+    print(f"[STARTUP] Fintel API starting - {settings.app_name} v{settings.app_version}")
+    print(f"   Database URL: {settings.async_db_url}")
     print(f"   LLM Provider: {settings.llm_provider} ({settings.llm_model})")
+    
+    # Initialize tables
+    from app.database import init_db, async_session_factory
+    from app.models import Alert
+    from sqlalchemy import select, func
+    try:
+        await init_db()
+        async with async_session_factory() as session:
+            count_res = await session.execute(select(func.count()).select_from(Alert))
+            total_alerts = count_res.scalar() or 0
+            if total_alerts == 0:
+                print("[SEED] Database is empty - running automated initial seed...")
+                from app.routers.seed import seed_all
+                from app.routers.rag import seed_typology_docs
+                await seed_all(session)
+                await seed_typology_docs(session)
+                print("[SEED] Automated seed complete!")
+            else:
+                print(f"[DATABASE] Database ready ({total_alerts} alerts present).")
+    except Exception as e:
+        print(f"[WARN] Database initialization warning: {e}")
+
     yield
-    # Shutdown
-    print("⏹️  Fintel API shutting down")
+    print("[SHUTDOWN] Fintel API shutting down")
+
 
 
 app = FastAPI(

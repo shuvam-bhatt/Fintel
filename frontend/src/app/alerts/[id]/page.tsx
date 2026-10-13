@@ -29,6 +29,8 @@ import {
   Radio,
   ExternalLink,
   FileCheck,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   api,
@@ -40,6 +42,7 @@ import {
   type InvestigateResult,
   type SimilarCase,
 } from "@/lib/api";
+import Navbar from "../../components/Navbar";
 
 // ─── Formatters & Utility Helpers ───────────────────────────────────────────
 
@@ -59,10 +62,16 @@ function formatDate(dateStr: string | null | undefined): string {
 }
 
 function getRiskTier(score: number | null | undefined) {
-  if (score === null || score === undefined) return { label: "UNKNOWN", color: "#64748b", bg: "#1e293b", border: "#475569" };
-  if (score >= 0.7) return { label: "TIER 1 (HIGH RISK)", color: "#fca5a5", bg: "#450a0a", border: "#b91c1c" };
-  if (score >= 0.4) return { label: "TIER 2 (ELEVATED)", color: "#fef08a", bg: "#422006", border: "#ca8a04" };
-  return { label: "TIER 3 (LOW RISK)", color: "#86efac", bg: "#052e16", border: "#16a34a" };
+  if (score === null || score === undefined) {
+    return { label: "UNKNOWN", color: "#94a3b8", bg: "rgba(148, 163, 184, 0.12)", border: "rgba(148, 163, 184, 0.3)" };
+  }
+  if (score >= 0.7) {
+    return { label: "TIER 1 (HIGH)", color: "#f87171", bg: "rgba(239, 68, 68, 0.15)", border: "rgba(239, 68, 68, 0.35)" };
+  }
+  if (score >= 0.4) {
+    return { label: "TIER 2 (ELEVATED)", color: "#fbbf24", bg: "rgba(245, 158, 11, 0.15)", border: "rgba(245, 158, 11, 0.35)" };
+  }
+  return { label: "TIER 3 (LOW)", color: "#34d399", bg: "rgba(16, 185, 129, 0.15)", border: "rgba(16, 185, 129, 0.35)" };
 }
 
 function getEntityIcon(type: string | null) {
@@ -86,6 +95,12 @@ export default function AlertDetailPage() {
   const params = useParams();
   const router = useRouter();
   const alertId = params?.id as string;
+
+  const showAlert = (msg: string) => {
+    if (typeof window !== "undefined") {
+      window.alert(msg);
+    }
+  };
 
   // Data states
   const [alert, setAlert] = useState<Alert | null>(null);
@@ -115,9 +130,11 @@ export default function AlertDetailPage() {
   // Active view tab
   const [activeTab, setActiveTab] = useState<"graph" | "timeline" | "entities" | "rag">("graph");
 
+  // Raw payload toggle
+  const [showRawPayload, setShowRawPayload] = useState(false);
+
   // Decision state
   const [submittingDecision, setSubmittingDecision] = useState(false);
-  const [decisionNotes, setDecisionNotes] = useState("");
   const [decisionSuccess, setDecisionSuccess] = useState<string | null>(null);
 
   // Load alert record
@@ -183,7 +200,7 @@ export default function AlertDetailPage() {
       }
     } catch (err: any) {
       console.error("Investigation execution failed:", err);
-      alertModal(`Investigation Agent execution failed: ${err.message}`);
+      showAlert(`Investigation Agent execution failed: ${err.message}`);
     } finally {
       setInvestigating(false);
     }
@@ -217,7 +234,7 @@ export default function AlertDetailPage() {
       setCurrentNarrativeId(res.narrative_id);
     } catch (err: any) {
       console.error("Narrative drafting failed:", err);
-      alertModal(`SAR draft generation failed: ${err.message}`);
+      showAlert(`SAR draft generation failed: ${err.message}`);
     } finally {
       setGeneratingNarrative(false);
     }
@@ -242,22 +259,19 @@ export default function AlertDetailPage() {
       await fetchAlert();
     } catch (err: any) {
       console.error("Adjudication submission failed:", err);
-      alertModal(`Adjudication submission error: ${err.message}`);
+      showAlert(`Adjudication submission error: ${err.message}`);
     } finally {
       setSubmittingDecision(false);
     }
   };
 
-  const alertModal = (msg: string) => {
-    window.alert(msg);
-  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--background)] text-slate-100 flex items-center justify-center p-8 font-mono">
-        <div className="gov-panel p-8 text-center max-w-md w-full shadow-[var(--neu-outer)] rounded-[16px]">
-          <RefreshCw className="animate-spin text-blue-400 mx-auto mb-4" size={24} />
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Accessing Federal Case Ledger</h2>
+        <div className="gov-panel p-6 text-center max-w-md w-full">
+          <RefreshCw className="animate-spin text-blue-400 mx-auto mb-3" size={24} />
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-1">Accessing Federal Case Ledger</h2>
           <p className="text-xs text-slate-400">Loading Case #{alertId?.slice(0, 8)} records from database...</p>
         </div>
       </div>
@@ -267,10 +281,10 @@ export default function AlertDetailPage() {
   if (error || !alert) {
     return (
       <div className="min-h-screen bg-[var(--background)] text-slate-100 flex items-center justify-center p-8 font-mono">
-        <div className="gov-panel p-8 text-center max-w-md w-full shadow-[var(--neu-outer)] rounded-[16px]">
+        <div className="gov-panel p-6 text-center max-w-md w-full">
           <AlertTriangle className="text-red-400 mx-auto mb-3" size={28} />
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Case File Record Not Found</h2>
-          <p className="text-xs text-slate-400 mb-6">{error || "Unable to locate alert identifier in system."}</p>
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-1">Case File Record Not Found</h2>
+          <p className="text-xs text-slate-400 mb-4">{error || "Unable to locate alert identifier in system."}</p>
           <Link href="/" className="gov-btn gov-btn-secondary inline-flex">
             <ChevronLeft size={14} /> Return to Queue
           </Link>
@@ -288,488 +302,413 @@ export default function AlertDetailPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-slate-100 flex flex-col font-sans">
-      {/* ── Official Government Banner ────────────────────────────────────── */}
-      <div className="gov-topbar flex flex-wrap items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-amber-400">FINANCIAL INTELLIGENCE UNIT (FIU)</span>
-          <span className="text-slate-500">|</span>
-          <span className="text-slate-300">SUSPICIOUS ACTIVITY INVESTIGATION DOSSIER</span>
-        </div>
-        <div className="flex items-center gap-4 text-[11px] text-slate-400">
-          <span className="text-amber-400 font-mono">CASE REF: FS-SAR-{alert.id.slice(0, 8).toUpperCase()}</span>
-          <span className="text-slate-500">|</span>
-          <span>RESTRICTED // LAW ENFORCEMENT SENSITIVE</span>
-        </div>
-      </div>
+      <Navbar currentAlertId={alert.id} />
 
       {/* ── Case Control Header ───────────────────────────────────────────── */}
-      <header className="bg-[var(--surface)] py-4 px-6 sm:px-8 shadow-[var(--neu-outer-sm)] rounded-b-[16px] mb-6">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
+      <div className="bg-[#0b1324] border-b border-slate-800 px-4 sm:px-8 py-3.5">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="gov-btn gov-btn-secondary"
+              className="gov-btn gov-btn-secondary py-1.5 px-3 text-xs"
               id="back-to-queue-btn"
             >
-              <ChevronLeft size={14} /> Back to Ledger
+              <ChevronLeft size={13} /> Back to Ledger
             </Link>
-            <div className="h-6 w-px bg-transparent" />
+            <div className="h-4 w-px bg-slate-800" />
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <span
                   className="gov-badge"
                   style={{ background: tier.bg, color: tier.color, borderColor: tier.border }}
                 >
                   {tier.label} [{(riskScore * 100).toFixed(0)}%]
                 </span>
-                <span className="gov-badge bg-blue-950 text-blue-200 border-blue-800">
+                <span className="gov-badge bg-blue-950/70 text-blue-300 border-blue-800/60">
                   {alert.typology ? alert.typology.toUpperCase().replace(/_/g, " ") : "UNCLASSIFIED"}
                 </span>
-                <span className="gov-badge bg-slate-900 text-slate-300 border-slate-700">
+                <span className="gov-badge bg-slate-900/60 text-slate-300 border-slate-700/60">
                   STATUS: {alert.status?.toUpperCase() || "NEW"}
                 </span>
               </div>
-              <h1 className="text-base font-bold text-white uppercase font-mono tracking-wide mt-1.5">
-                Primary Subject: {alert.account_id || "Unidentified Account"} (Transaction #{alert.transaction_id || alert.id.slice(0, 8)})
+              <h1 className="text-sm font-bold text-white font-mono tracking-wide mt-1">
+                Primary Subject: {alert.account_id || "Unidentified Account"} (Tx #{alert.transaction_id || alert.id.slice(0, 8)})
               </h1>
             </div>
           </div>
 
           {/* Action Toolbar */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               id="run-agent-btn"
               onClick={handleInvestigate}
               disabled={investigating}
-              className="gov-btn gov-btn-primary"
+              className="gov-btn gov-btn-primary py-1.5 px-3.5 text-xs"
             >
-              <Share2 size={13} />
+              <Share2 size={13} className={investigating ? "animate-spin" : ""} />
               {investigating ? "Traversing Network..." : "Execute Graph Agent"}
             </button>
             <button
               id="generate-narrative-btn"
               onClick={() => handleGenerateNarrative()}
               disabled={generatingNarrative}
-              className="gov-btn gov-btn-secondary"
+              className="gov-btn gov-btn-secondary py-1.5 px-3.5 text-xs"
             >
-              <FileText size={13} />
+              <FileText size={13} className={generatingNarrative ? "animate-spin text-blue-400" : ""} />
               {generatingNarrative ? "Drafting SAR..." : narrativeText ? "Regenerate SAR Draft" : "Draft SAR Narrative"}
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* ── Main Investigation Body ───────────────────────────────────────── */}
-      <main className="max-w-7xl mx-auto px-6 sm:px-8 py-8 flex-1 w-full space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-5 flex-1 w-full space-y-4">
         {/* Success Alert */}
         {decisionSuccess && (
-          <div className="p-4 bg-[var(--surface)] shadow-[var(--neu-inner)] rounded-[12px] text-emerald-400 text-xs font-mono flex items-center justify-between">
+          <div className="p-3 bg-emerald-950/70 border border-emerald-500/40 rounded-lg text-emerald-300 text-xs font-mono flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} />
+              <CheckCircle2 size={15} />
               <span>{decisionSuccess}</span>
             </div>
             <button
               onClick={() => setDecisionSuccess(null)}
-              className="text-slate-400 hover:text-white uppercase text-[10px]"
+              className="text-slate-400 hover:text-white text-[10px]"
             >
-              [Dismiss]
+              ✕
             </button>
           </div>
         )}
 
-        {/* ── Section 1: Official Case Parameter Grid ─────────────────────── */}
-        <section className="gov-panel" aria-labelledby="section-case-summary">
-          <div className="border-b border-[#243553] pb-2 mb-4 flex items-center justify-between">
-            <h2 id="section-case-summary" className="text-xs font-mono uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
-              <Building size={14} className="text-amber-400" />
-              Primary Transaction Parameters & Ingestion Metadata
-            </h2>
-            <span className="text-[11px] font-mono text-slate-500">Form 111 (BSA CTR/SAR Input)</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+        {/* ── Compact Case Parameter Ribbon ────────────────────────────────── */}
+        <section className="gov-panel p-3.5" aria-labelledby="section-case-summary">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div>
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                Transaction ID
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                Transaction Ref
               </span>
-              <span className="text-xs font-mono font-bold text-white block">
+              <span className="text-xs font-mono font-bold text-white block mt-0.5 truncate">
                 {alert.transaction_id || "NOT ASSIGNED"}
               </span>
             </div>
             <div>
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
                 Account ID / BIC
               </span>
-              <span className="text-xs font-mono font-bold text-blue-300 block">
+              <span className="text-xs font-mono font-bold text-blue-400 block mt-0.5 truncate">
                 {alert.account_id || "UNIDENTIFIED"}
               </span>
             </div>
             <div>
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
                 Transaction Amount
               </span>
-              <span className="text-xs font-mono font-bold text-emerald-400 block">
+              <span className="text-xs font-mono font-bold text-emerald-400 block mt-0.5">
                 {formatAmount(alert.amount)} {alert.currency || "USD"}
               </span>
             </div>
             <div>
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
                 Execution Timestamp
               </span>
-              <span className="text-xs font-mono text-slate-300 block">
+              <span className="text-xs font-mono text-slate-300 block mt-0.5 truncate">
                 {formatDate(alert.timestamp)}
               </span>
             </div>
             <div>
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
                 Composite Risk Tier
               </span>
               <span
-                className="gov-badge mt-0.5"
+                className="gov-badge mt-0.5 text-[10px] py-0.5"
                 style={{ background: tier.bg, color: tier.color, borderColor: tier.border }}
               >
                 {tier.label}
               </span>
             </div>
             <div>
-              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
                 Typology Classification
               </span>
-              <span className="text-xs font-mono font-bold text-amber-300 block mt-0.5">
+              <span className="text-xs font-mono font-bold text-amber-300 block mt-0.5 truncate">
                 {(alert.typology || "unclassified").toUpperCase().replace(/_/g, " ")}
               </span>
             </div>
           </div>
-
-          {/* Raw System Event Log Payload */}
-          <div className="mt-6 pt-4">
-            <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-2 font-bold">
-              Raw Source Ingestion Payload / Telemetry Record:
-            </span>
-            <div className="bg-[var(--background)] shadow-[var(--neu-inner)] rounded-[12px] p-4 text-xs font-mono text-slate-300 leading-relaxed overflow-x-auto whitespace-pre-wrap">
-              {alert.raw_text}
-            </div>
-          </div>
         </section>
 
-        {/* ── Section 2: Two-Column Dossier Workspace ─────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* ── Two-Column High-Efficiency Dossier Workspace ─────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          
           {/* Left Column: Evidence, Graph & Timeline (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-4">
+            
             {/* View Switcher Tabs */}
-            <div className="flex flex-wrap gap-2 border-b border-[#243553] pb-2 font-mono text-xs">
-              <button
-                id="tab-graph-btn"
-                onClick={() => setActiveTab("graph")}
-                className={`px-4 py-2 font-bold uppercase transition rounded-[10px] m-1 ${
-                  activeTab === "graph"
-                    ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner)]"
-                    : "bg-[var(--surface)] text-[var(--muted)] shadow-[var(--neu-outer-sm)] hover:shadow-[var(--neu-outer)] hover:text-white"
-                }`}
-              >
-                [1] Knowledge Graph Network
-              </button>
-              <button
-                id="tab-timeline-btn"
-                onClick={() => setActiveTab("timeline")}
-                className={`px-4 py-2 font-bold uppercase transition rounded-[10px] m-1 ${
-                  activeTab === "timeline"
-                    ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner)]"
-                    : "bg-[var(--surface)] text-[var(--muted)] shadow-[var(--neu-outer-sm)] hover:shadow-[var(--neu-outer)] hover:text-white"
-                }`}
-              >
-                [2] Event Velocity Log
-              </button>
-              <button
-                id="tab-entities-btn"
-                onClick={() => setActiveTab("entities")}
-                className={`px-4 py-2 font-bold uppercase transition rounded-[10px] m-1 ${
-                  activeTab === "entities"
-                    ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner)]"
-                    : "bg-[var(--surface)] text-[var(--muted)] shadow-[var(--neu-outer-sm)] hover:shadow-[var(--neu-outer)] hover:text-white"
-                }`}
-              >
-                [3] Extracted Entities ({alert.entities?.length || 0})
-              </button>
-              <button
-                id="tab-rag-btn"
-                onClick={() => setActiveTab("rag")}
-                className={`px-4 py-2 font-bold uppercase transition rounded-[10px] m-1 ${
-                  activeTab === "rag"
-                    ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner)]"
-                    : "bg-[var(--surface)] text-[var(--muted)] shadow-[var(--neu-outer-sm)] hover:shadow-[var(--neu-outer)] hover:text-white"
-                }`}
-              >
-                [4] Precedents ({similarCases.length})
-              </button>
-            </div>
-
-            {/* TAB 1: Institutional Knowledge Graph */}
-            {activeTab === "graph" && (
-              <div className="gov-panel space-y-4">
-                <div className="flex flex-wrap items-center justify-between border-b border-[#243553] pb-2">
-                  <div>
-                    <h3 className="text-xs font-mono uppercase tracking-wider text-white font-bold flex items-center gap-2">
-                      <Share2 className="text-blue-400" size={14} />
-                      Multi-Hop Mule Ring & Counterparty Relationship Graph
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Visual correlation of transacted accounts, shared devices, and exit cash-out nodes.
-                    </p>
-                  </div>
-                  <span className="gov-badge bg-blue-950 text-blue-300 border-blue-800">
-                    {investigationData?.linked_entities?.length || 0} CORRELATED NODES
-                  </span>
+            <div className="gov-panel p-3.5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+                <div className="flex flex-wrap gap-1.5 font-mono text-xs">
+                  <button
+                    id="tab-graph-btn"
+                    onClick={() => setActiveTab("graph")}
+                    className={`px-3 py-1.5 font-semibold uppercase rounded-md transition text-xs flex items-center gap-1.5 ${
+                      activeTab === "graph"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800"
+                    }`}
+                  >
+                    <Share2 size={12} />
+                    Knowledge Graph
+                  </button>
+                  <button
+                    id="tab-timeline-btn"
+                    onClick={() => setActiveTab("timeline")}
+                    className={`px-3 py-1.5 font-semibold uppercase rounded-md transition text-xs flex items-center gap-1.5 ${
+                      activeTab === "timeline"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800"
+                    }`}
+                  >
+                    <Clock size={12} />
+                    Velocity Log
+                  </button>
+                  <button
+                    id="tab-entities-btn"
+                    onClick={() => setActiveTab("entities")}
+                    className={`px-3 py-1.5 font-semibold uppercase rounded-md transition text-xs flex items-center gap-1.5 ${
+                      activeTab === "entities"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800"
+                    }`}
+                  >
+                    <Layers size={12} />
+                    Entities ({alert.entities?.length || 0})
+                  </button>
+                  <button
+                    id="tab-rag-btn"
+                    onClick={() => setActiveTab("rag")}
+                    className={`px-3 py-1.5 font-semibold uppercase rounded-md transition text-xs flex items-center gap-1.5 ${
+                      activeTab === "rag"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800"
+                    }`}
+                  >
+                    <FileCheck size={12} />
+                    Precedents ({similarCases.length})
+                  </button>
                 </div>
-
-                {/* Clean Official SVG Network Canvas */}
-                <div className="w-full h-80 bg-[var(--background)] shadow-[var(--neu-inner)] rounded-[12px] relative overflow-hidden flex items-center justify-center p-4 mt-4">
-                  <svg className="w-full h-full" viewBox="0 0 600 300">
-                    {/* Grid Pattern */}
-                    <defs>
-                      <pattern id="govGrid" width="25" height="25" patternUnits="userSpaceOnUse">
-                        <path d="M 25 0 L 0 0 0 25" fill="none" stroke="#162238" strokeWidth="0.5" />
-                      </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#govGrid)" />
-
-                    {/* Connection Edges */}
-                    <line x1="100" y1="150" x2="250" y2="150" stroke="#3b82f6" strokeWidth="2" strokeDasharray="3 3" />
-                    <line x1="250" y1="150" x2="400" y2="80" stroke="#3b82f6" strokeWidth="2" />
-                    <line x1="250" y1="150" x2="400" y2="220" stroke="#ca8a04" strokeWidth="2" strokeDasharray="4 2" />
-                    <line x1="400" y1="80" x2="520" y2="150" stroke="#dc2626" strokeWidth="2" />
-                    <line x1="400" y1="220" x2="520" y2="150" stroke="#dc2626" strokeWidth="2" />
-
-                    {/* Edge Labels */}
-                    <text x="175" y="140" fill="#94a3b8" fontSize="10" textAnchor="middle" fontFamily="monospace">
-                      DEPOSIT / ORIGIN
-                    </text>
-                    <text x="325" y="105" fill="#93c5fd" fontSize="10" textAnchor="middle" fontFamily="monospace">
-                      HOP 1 (TRANSFER)
-                    </text>
-                    <text x="325" y="195" fill="#fde047" fontSize="10" textAnchor="middle" fontFamily="monospace">
-                      SHARED DEVICE / IP
-                    </text>
-                    <text x="470" y="110" fill="#fca5a5" fontSize="10" textAnchor="middle" fontFamily="monospace">
-                      CASHOUT HOP
-                    </text>
-
-                    {/* Node 1: Originating Account */}
-                    <g>
-                      <rect x="65" y="125" width="70" height="50" fill="#0f172a" stroke="#3b82f6" strokeWidth="1.5" />
-                      <text x="100" y="145" fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                        SOURCE
-                      </text>
-                      <text x="100" y="160" fill="#94a3b8" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
-                        {alert.account_id ? alert.account_id.slice(-6) : "ORIGIN"}
-                      </text>
-                    </g>
-
-                    {/* Node 2: Flagged Alert Node */}
-                    <g>
-                      <rect x="210" y="120" width="80" height="60" fill="#1e293b" stroke={tier.border} strokeWidth="2" />
-                      <text x="250" y="143" fill="#ffffff" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                        SUBJECT
-                      </text>
-                      <text x="250" y="158" fill={tier.color} fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                        RISK {(riskScore * 100).toFixed(0)}%
-                      </text>
-                      <text x="250" y="172" fill="#94a3b8" fontSize="8" textAnchor="middle" fontFamily="monospace">
-                        FLAGGED RECORD
-                      </text>
-                    </g>
-
-                    {/* Node 3: Linked Mule A */}
-                    <g>
-                      <rect x="365" y="55" width="70" height="50" fill="#0c1d38" stroke="#3b82f6" strokeWidth="1.5" />
-                      <text x="400" y="75" fill="#93c5fd" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                        MULE HOP 1
-                      </text>
-                      <text x="400" y="90" fill="#cbd5e1" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
-                        INTERMEDIARY
-                      </text>
-                    </g>
-
-                    {/* Node 4: Shared Device */}
-                    <g>
-                      <rect x="365" y="195" width="70" height="50" fill="#2d1d06" stroke="#ca8a04" strokeWidth="1.5" />
-                      <text x="400" y="215" fill="#fde047" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                        DEVICE / IP
-                      </text>
-                      <text x="400" y="230" fill="#e2e8f0" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
-                        FINGERPRINT
-                      </text>
-                    </g>
-
-                    {/* Node 5: Cash-Out Terminal */}
-                    <g>
-                      <rect x="485" y="125" width="70" height="50" fill="#380e0e" stroke="#dc2626" strokeWidth="1.5" />
-                      <text x="520" y="145" fill="#fca5a5" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                        CASHOUT
-                      </text>
-                      <text x="520" y="160" fill="#fee2e2" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
-                        FINAL SINK
-                      </text>
-                    </g>
-                  </svg>
-                </div>
-
-                {/* Correlated Entities Subtable */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
-                    Correlated Sub-Network Entities ({investigationData?.linked_entities?.length || 0})
-                  </h4>
-                  {investigationData?.linked_entities && investigationData.linked_entities.length > 0 ? (
-                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                      {investigationData.linked_entities.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-3 bg-[var(--surface)] rounded-[10px] shadow-[var(--neu-outer-sm)] text-xs font-mono mb-2"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="p-1.5 bg-[var(--background)] shadow-[var(--neu-inner-sm)] rounded-[6px]">{getEntityIcon(item.entity_type)}</span>
-                            <div>
-                              <span className="font-bold text-white">{item.entity_value}</span>
-                              <span className="text-[10px] text-slate-400 block mt-0.5">
-                                TYPE: {item.entity_type.toUpperCase()} • RELATION: {item.relationship?.toUpperCase() || "LINKED"}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="gov-badge">
-                            HOP {item.hop_distance || 1}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[var(--muted)] py-4 text-center bg-[var(--surface)] shadow-[var(--neu-inner)] rounded-[10px] font-mono">
-                      No network hops recorded yet. Click &quot;Execute Graph Agent&quot; above to traverse the knowledge graph.
-                    </p>
-                  )}
-                </div>
+                <span className="gov-badge bg-blue-950/70 text-blue-300 border-blue-800/60 text-[10px]">
+                  {investigationData?.linked_entities?.length || 0} CORRELATED HOPS
+                </span>
               </div>
-            )}
 
-            {/* TAB 2: Chronological Velocity Log */}
-            {activeTab === "timeline" && (
-              <div className="gov-panel space-y-4">
-                <div className="border-b border-[#243553] pb-2">
-                  <h3 className="text-xs font-mono uppercase tracking-wider text-white font-bold flex items-center gap-2">
-                    <Clock className="text-blue-400" size={14} />
-                    Chronological Audit Ledger & Evidence Progression
-                  </h3>
-                </div>
-                <div className="space-y-4 font-mono text-xs mt-4">
-                  <div className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] space-y-1">
-                    <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                      <span className="text-amber-400 font-bold">[STEP 1] ANOMALY DETECTION</span>
-                      <span>{formatDate(alert.timestamp)}</span>
-                    </div>
-                    <p className="text-slate-200">
-                      Transaction flagged with risk score {(riskScore * 100).toFixed(0)}%. Typology labeled as {alert.typology}.
-                    </p>
+              {/* TAB 1: Institutional Knowledge Graph */}
+              {activeTab === "graph" && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span>Multi-Hop Mule Ring & Counterparty Relationship Graph</span>
+                    <span className="font-mono text-[11px] text-blue-400">BFS Graph Algorithm Traversal</span>
                   </div>
 
-                  <div className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] space-y-1">
-                    <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                      <span className="text-blue-400 font-bold">[STEP 2] NLP DISAMBIGUATION</span>
-                      <span>AUTOMATED INTAKE</span>
-                    </div>
-                    <p className="text-slate-200">
-                      Structured extraction identified {alert.entities?.length || 0} financial entities from raw payload notes.
-                    </p>
-                  </div>
+                  {/* Clean SVG Network Canvas */}
+                  <div className="w-full h-72 bg-[#090f1d] border border-slate-800/80 rounded-lg relative overflow-hidden flex items-center justify-center p-3">
+                    <svg className="w-full h-full" viewBox="0 0 600 280">
+                      <defs>
+                        <pattern id="govGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#131e33" strokeWidth="0.5" />
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#govGrid)" />
 
-                  <div className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] space-y-1">
-                    <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                      <span className="text-emerald-400 font-bold">[STEP 3] KNOWLEDGE GRAPH CORRELATION</span>
-                      <span>AGENT ADJUDICATION</span>
-                    </div>
-                    <p className="text-slate-200">
-                      Multi-hop traversal completed. Verdict: {investigationData?.verdict?.toUpperCase() || "LIKELY SUSPICIOUS"}.
-                    </p>
+                      {/* Connection Edges */}
+                      <line x1="100" y1="140" x2="240" y2="140" stroke="#3b82f6" strokeWidth="2" strokeDasharray="3 3" />
+                      <line x1="240" y1="140" x2="390" y2="75" stroke="#3b82f6" strokeWidth="2" />
+                      <line x1="240" y1="140" x2="390" y2="205" stroke="#ca8a04" strokeWidth="2" strokeDasharray="4 2" />
+                      <line x1="390" y1="75" x2="510" y2="140" stroke="#dc2626" strokeWidth="2" />
+                      <line x1="390" y1="205" x2="510" y2="140" stroke="#dc2626" strokeWidth="2" />
+
+                      {/* Edge Labels */}
+                      <text x="170" y="132" fill="#94a3b8" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                        ORIGIN DEPOSIT
+                      </text>
+                      <text x="315" y="100" fill="#93c5fd" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                        HOP 1 (TRANSFER)
+                      </text>
+                      <text x="315" y="185" fill="#fde047" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                        SHARED DEVICE / IP
+                      </text>
+                      <text x="460" y="100" fill="#fca5a5" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                        CASHOUT TERMINAL
+                      </text>
+
+                      {/* Node 1: Source */}
+                      <g>
+                        <rect x="65" y="115" width="70" height="50" rx="6" fill="#0c172c" stroke="#3b82f6" strokeWidth="1.5" />
+                        <text x="100" y="135" fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                          SOURCE
+                        </text>
+                        <text x="100" y="152" fill="#94a3b8" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                          {alert.account_id ? alert.account_id.slice(-6) : "ORIGIN"}
+                        </text>
+                      </g>
+
+                      {/* Node 2: Subject */}
+                      <g>
+                        <rect x="200" y="110" width="80" height="60" rx="6" fill="#152442" stroke={tier.border} strokeWidth="2" />
+                        <text x="240" y="133" fill="#ffffff" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                          SUBJECT
+                        </text>
+                        <text x="240" y="148" fill={tier.color} fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                          RISK {(riskScore * 100).toFixed(0)}%
+                        </text>
+                        <text x="240" y="162" fill="#94a3b8" fontSize="8" textAnchor="middle" fontFamily="monospace">
+                          FLAGGED
+                        </text>
+                      </g>
+
+                      {/* Node 3: Mule Hop 1 */}
+                      <g>
+                        <rect x="355" y="50" width="70" height="50" rx="6" fill="#0c1d38" stroke="#3b82f6" strokeWidth="1.5" />
+                        <text x="390" y="70" fill="#93c5fd" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                          MULE HOP 1
+                        </text>
+                        <text x="390" y="86" fill="#cbd5e1" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                          INTERMEDIARY
+                        </text>
+                      </g>
+
+                      {/* Node 4: Device */}
+                      <g>
+                        <rect x="355" y="180" width="70" height="50" rx="6" fill="#2d1d06" stroke="#ca8a04" strokeWidth="1.5" />
+                        <text x="390" y="200" fill="#fde047" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                          DEVICE / IP
+                        </text>
+                        <text x="390" y="216" fill="#e2e8f0" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                          FINGERPRINT
+                        </text>
+                      </g>
+
+                      {/* Node 5: Cash-out */}
+                      <g>
+                        <rect x="475" y="115" width="70" height="50" rx="6" fill="#3b0f0f" stroke="#ef4444" strokeWidth="1.5" />
+                        <text x="510" y="135" fill="#fca5a5" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                          CASHOUT
+                        </text>
+                        <text x="510" y="152" fill="#cbd5e1" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                          EXIT POINT
+                        </text>
+                      </g>
+                    </svg>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* TAB 3: Extracted Entities List */}
-            {activeTab === "entities" && (
-              <div className="gov-panel space-y-4">
-                <div className="border-b border-[#243553] pb-2">
-                  <h3 className="text-xs font-mono uppercase tracking-wider text-white font-bold flex items-center gap-2">
-                    <Layers className="text-blue-400" size={14} />
-                    Extracted Financial Entities (Disambiguated Records)
-                  </h3>
+              {/* TAB 2: Timeline */}
+              {activeTab === "timeline" && (
+                <div className="space-y-2.5 font-mono text-xs">
+                  <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg flex items-start gap-3">
+                    <span className="p-1 rounded bg-blue-500/20 text-blue-400 mt-0.5"><Clock size={13} /></span>
+                    <div>
+                      <span className="text-white font-bold block">T-0: Initial Anomaly Detection Triggered</span>
+                      <span className="text-[11px] text-slate-400">Transaction amount {formatAmount(alert.amount)} analyzed by risk engine.</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg flex items-start gap-3">
+                    <span className="p-1 rounded bg-amber-500/20 text-amber-400 mt-0.5"><Share2 size={13} /></span>
+                    <div>
+                      <span className="text-white font-bold block">T+2m: Multi-Hop Knowledge Graph Traversal</span>
+                      <span className="text-[11px] text-slate-400">Correlated {investigationData?.linked_entities?.length || 0} associated nodes across network.</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg flex items-start gap-3">
+                    <span className="p-1 rounded bg-emerald-500/20 text-emerald-400 mt-0.5"><FileCheck size={13} /></span>
+                    <div>
+                      <span className="text-white font-bold block">T+5m: RAG Precedent Retrieval & SAR Drafting</span>
+                      <span className="text-[11px] text-slate-400">Matched historical typology cases with sentence-level exhibit citations.</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+              )}
+
+              {/* TAB 3: Entities */}
+              {activeTab === "entities" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-mono text-xs">
                   {alert.entities && alert.entities.length > 0 ? (
                     alert.entities.map((ent, idx) => (
-                      <div key={idx} className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <span className="p-1.5 bg-[var(--background)] shadow-[var(--neu-inner-sm)] rounded-[6px]">{getEntityIcon(ent.entity_type)}</span>
+                      <div key={idx} className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="p-1.5 bg-slate-800 rounded">{getEntityIcon(ent.entity_type)}</span>
                           <div>
-                            <span className="font-bold text-white block">{ent.entity_value}</span>
-                            <span className="text-[10px] text-slate-400">TYPE: {ent.entity_type.toUpperCase()}</span>
+                            <span className="font-bold text-white block truncate max-w-[150px]">{ent.entity_value}</span>
+                            <span className="text-[10px] text-slate-400">
+                              TYPE: {ent.entity_type ? ent.entity_type.toUpperCase() : "UNKNOWN"}
+                            </span>
                           </div>
                         </div>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-400 font-mono">
                           CONF: {((ent.confidence || 0.95) * 100).toFixed(0)}%
                         </span>
                       </div>
                     ))
                   ) : (
-                    <div className="col-span-2 text-center py-8 text-slate-400 font-mono text-xs">
+                    <div className="col-span-2 text-center py-6 text-slate-400 font-mono text-xs">
                       No entities extracted yet. Execute the Graph Agent above to parse entities.
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* TAB 4: RAG Precedents */}
-            {activeTab === "rag" && (
-              <div className="gov-panel space-y-4">
-                <div className="border-b border-[#243553] pb-2">
-                  <h3 className="text-xs font-mono uppercase tracking-wider text-white font-bold flex items-center gap-2">
-                    <Database className="text-blue-400" size={14} />
-                    Historical Precedents & Typology Definitions (pgvector Cosine Search)
-                  </h3>
-                </div>
-                {loadingRAG ? (
-                  <div className="text-center py-8 text-xs font-mono text-slate-400">
-                    Querying vector database for matching precedents...
-                  </div>
-                ) : similarCases.length > 0 ? (
-                  <div className="space-y-4 font-mono text-xs mt-4">
-                    {similarCases.map((c, idx) => (
-                      <div key={idx} className="p-4 bg-[var(--surface)] shadow-[var(--neu-outer-sm)] rounded-[12px] space-y-2">
-                        <div className="flex items-center justify-between text-[11px] mb-1">
-                          <span className="font-bold text-blue-300 uppercase">{c.source_type.replace(/_/g, " ")}</span>
-                          <span className="gov-badge bg-blue-950 text-blue-300 border-blue-800 text-[10px]">
+              {/* TAB 4: RAG Precedents */}
+              {activeTab === "rag" && (
+                <div className="space-y-2.5 text-xs">
+                  {similarCases.length > 0 ? (
+                    similarCases.map((c, idx) => (
+                      <div key={idx} className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg space-y-1">
+                        <div className="flex items-center justify-between font-mono text-[11px]">
+                          <span className="font-bold text-blue-400 uppercase">{c.source_type}</span>
+                          <span className="gov-badge bg-emerald-950/70 text-emerald-300 border-emerald-800/60 text-[10px]">
                             MATCH: {(c.similarity * 100).toFixed(1)}%
                           </span>
                         </div>
                         <p className="text-slate-300 leading-relaxed font-sans">{c.content}</p>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-slate-400 font-mono text-xs">
-                    No matching regulatory precedents retrieved.
-                  </div>
-                )}
-              </div>
-            )}
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-slate-400 font-mono text-xs">
+                      No matching regulatory precedents retrieved.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Ingestion Payload Accordion */}
+            <div className="gov-panel p-3">
+              <button
+                onClick={() => setShowRawPayload(!showRawPayload)}
+                className="w-full flex items-center justify-between text-xs font-mono text-slate-300 font-bold hover:text-white"
+              >
+                <span className="flex items-center gap-2">
+                  <Database size={13} className="text-blue-400" />
+                  Raw Source Ingestion Payload / Telemetry Record
+                </span>
+                {showRawPayload ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              {showRawPayload && (
+                <div className="mt-2.5 p-3 bg-[#070b16] border border-slate-800 rounded text-xs font-mono text-slate-300 leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-48">
+                  {alert.raw_text}
+                </div>
+              )}
+            </div>
+
           </div>
 
-          {/* Right Column: Official SAR Narrative & Exhibit Grounding (5 cols) */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="gov-panel space-y-5">
-              {/* Report Header */}
-              <div className="border-b border-[#243553] pb-3 flex flex-wrap items-center justify-between gap-2">
+          {/* Right Column: SAR Narrative & Adjudication (5 cols) */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="gov-panel space-y-3.5">
+              
+              {/* Header */}
+              <div className="border-b border-slate-800 pb-2.5 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-mono uppercase tracking-wider text-white font-bold flex items-center gap-2">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-white font-bold flex items-center gap-1.5">
                     <FileText className="text-amber-400" size={14} />
                     SAR Form Part V: Narrative
                   </h3>
@@ -781,17 +720,17 @@ export default function AlertDetailPage() {
                   <button
                     id="edit-narrative-toggle-btn"
                     onClick={() => setIsEditingNarrative(!isEditingNarrative)}
-                    className="gov-btn gov-btn-secondary text-[11px]"
+                    className="gov-btn gov-btn-secondary text-[11px] py-1 px-2.5"
                   >
                     <Edit3 size={11} />
-                    {isEditingNarrative ? "View Exhibits" : "Edit Text"}
+                    {isEditingNarrative ? "View Exhibits" : "Edit Draft"}
                   </button>
                 )}
               </div>
 
               {/* Narrative Content Body */}
               {narrativeText ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {isEditingNarrative ? (
                     <div className="space-y-2">
                       <label className="text-[11px] font-mono text-amber-400 uppercase font-bold flex items-center gap-1.5">
@@ -801,14 +740,14 @@ export default function AlertDetailPage() {
                         id="narrative-textarea"
                         value={editableNarrative}
                         onChange={(e) => setEditableNarrative(e.target.value)}
-                        rows={16}
+                        rows={14}
                         className="gov-input font-mono text-xs leading-relaxed"
                       />
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {/* Document Sheet */}
-                      <div className="bg-[var(--background)] shadow-[var(--neu-inner)] rounded-[12px] p-5 text-xs font-mono leading-relaxed text-[var(--foreground)] space-y-2.5">
+                      <div className="bg-[#070b16] border border-slate-800/80 rounded-lg p-4 text-xs font-mono leading-relaxed text-slate-200 space-y-2 max-h-[360px] overflow-y-auto">
                         {sentences.map((sentence, idx) => {
                           const hasCitation = citations.some(
                             (c) => c.sentence_index === idx || sentence.includes(c.sentence)
@@ -824,11 +763,11 @@ export default function AlertDetailPage() {
                                 );
                                 setSelectedCitation(match || null);
                               }}
-                              className={`cursor-pointer transition-all inline px-1 py-0.5 rounded-[4px] ${
+                              className={`cursor-pointer transition-all inline px-1 py-0.5 rounded ${
                                 isSelected
-                                  ? "bg-[var(--primary)] text-white shadow-[var(--neu-inner-sm)]"
+                                  ? "bg-blue-600 text-white font-medium"
                                   : hasCitation
-                                  ? "hover:text-[var(--primary)] border-b border-dotted border-[var(--primary)] text-slate-200"
+                                  ? "hover:text-blue-300 border-b border-dotted border-blue-400 text-slate-200"
                                   : "text-slate-300"
                               }`}
                               title={hasCitation ? "Click to verify source exhibit citation" : "Narrative statement"}
@@ -845,33 +784,33 @@ export default function AlertDetailPage() {
                       </div>
 
                       {/* Evidence Grounding Card */}
-                      <div className="gov-panel mt-4 space-y-3">
-                        <div className="flex items-center justify-between border-b border-[#243553] pb-1.5">
+                      <div className="p-3 bg-slate-900/50 border border-slate-800 rounded-lg space-y-2">
+                        <div className="flex items-center justify-between border-b border-slate-800/60 pb-1.5">
                           <span className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                             <FileCheck size={13} className="text-emerald-400" />
                             Evidence Traceability Record
                           </span>
-                          <span className="gov-badge bg-emerald-950 text-emerald-300 border-emerald-800 text-[10px]">
-                            100% VERIFIED GROUNDING
+                          <span className="gov-badge bg-emerald-950/70 text-emerald-300 border-emerald-800/60 text-[10px]">
+                            100% VERIFIED
                           </span>
                         </div>
                         {selectedCitation ? (
-                          <div className="font-mono text-xs space-y-1.5 pt-1">
+                          <div className="font-mono text-xs space-y-1 pt-0.5">
                             <div className="flex items-center justify-between text-slate-300">
-                              <span className="text-slate-400">SOURCE REPOSITORY:</span>
-                              <span className="font-bold text-blue-300 uppercase">{selectedCitation.source_type}</span>
+                              <span className="text-slate-400">SOURCE:</span>
+                              <span className="font-bold text-blue-400 uppercase">{selectedCitation.source_type}</span>
                             </div>
                             <div className="flex items-center justify-between text-slate-300">
                               <span className="text-slate-400">RECORD ID:</span>
-                              <span className="text-slate-200">{selectedCitation.source_id.slice(0, 20)}...</span>
+                              <span className="text-slate-200 truncate max-w-[180px]">{selectedCitation.source_id}</span>
                             </div>
-                            <div className="pt-1.5 border-t border-[#1a2840] text-slate-400 text-[11px]">
-                              VERIFIED EVIDENCE: <span className="text-slate-200">{selectedCitation.source_detail}</span>
+                            <div className="pt-1 border-t border-slate-800/60 text-slate-400 text-[11px]">
+                              VERIFIED: <span className="text-slate-200">{selectedCitation.source_detail}</span>
                             </div>
                           </div>
                         ) : (
-                          <p className="text-[11px] font-mono text-slate-400 py-1">
-                            Click any narrative sentence with citation mark <code>[EXHIBIT #]</code> to verify its immutable source transaction ID, account, amount, and timestamp.
+                          <p className="text-[11px] font-mono text-slate-400 py-0.5">
+                            Click any narrative sentence with an <code>[EXHIBIT #]</code> badge to verify its source record.
                           </p>
                         )}
                       </div>
@@ -879,8 +818,8 @@ export default function AlertDetailPage() {
                   )}
 
                   {/* ── Official Adjudication Controls ─────────────────────── */}
-                  <div className="pt-4 border-t border-[#243553] space-y-3">
-                    <span className="text-xs font-mono font-bold uppercase text-slate-300 block tracking-wider">
+                  <div className="pt-3 border-t border-slate-800 space-y-2.5">
+                    <span className="text-[11px] font-mono font-bold uppercase text-slate-300 block tracking-wider">
                       Official Compliance Adjudication Sign-Off:
                     </span>
                     <div className="grid grid-cols-3 gap-2">
@@ -888,24 +827,24 @@ export default function AlertDetailPage() {
                         id="approve-sar-btn"
                         onClick={() => handleSubmitDecision(isEditingNarrative ? "edited" : "approved")}
                         disabled={submittingDecision}
-                        className="gov-btn gov-btn-success"
+                        className="gov-btn gov-btn-success text-xs py-2"
                       >
                         <ThumbsUp size={12} />
-                        {isEditingNarrative ? "Approve (Edited)" : "Approve SAR"}
+                        {isEditingNarrative ? "Approve" : "Approve SAR"}
                       </button>
                       <button
                         id="reject-case-btn"
                         onClick={() => handleSubmitDecision("rejected")}
                         disabled={submittingDecision}
-                        className="gov-btn gov-btn-danger"
+                        className="gov-btn gov-btn-danger text-xs py-2"
                       >
                         <ThumbsDown size={12} />
-                        Dismiss Case
+                        Dismiss
                       </button>
                       <button
                         id="request-info-btn"
-                        onClick={() => alertModal("Case file flagged for Senior Compliance Officer escalation.")}
-                        className="gov-btn gov-btn-secondary"
+                        onClick={() => showAlert("Case file flagged for Senior Compliance Officer escalation.")}
+                        className="gov-btn gov-btn-secondary text-xs py-2"
                       >
                         <Info size={12} />
                         Escalate
@@ -914,8 +853,8 @@ export default function AlertDetailPage() {
                   </div>
                 </div>
               ) : (
-                <div className="py-12 px-4 bg-[var(--background)] shadow-[var(--neu-inner)] rounded-[12px] text-center space-y-3 font-mono mt-4">
-                  <FileText className="text-slate-500 mx-auto" size={28} />
+                <div className="py-10 px-4 bg-[#070b16] border border-slate-800 rounded-lg text-center space-y-2.5 font-mono">
+                  <FileText className="text-slate-500 mx-auto" size={26} />
                   <p className="text-xs font-bold text-white uppercase tracking-wider">No SAR Draft Generated</p>
                   <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
                     Execute the Graph Agent or generate a verified SAR narrative draft with sentence-level citations.
@@ -923,7 +862,7 @@ export default function AlertDetailPage() {
                   <button
                     onClick={() => handleGenerateNarrative()}
                     disabled={generatingNarrative}
-                    className="gov-btn gov-btn-primary inline-flex mt-2"
+                    className="gov-btn gov-btn-primary inline-flex mt-1 text-xs py-1.5 px-3"
                   >
                     <FileText size={12} /> Draft SAR Narrative Now
                   </button>
