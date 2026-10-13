@@ -215,10 +215,10 @@ export default function AlertDetailPage() {
   };
 
   // Submit Adjudication
-  const handleSubmitDecision = async (decision: "approved" | "rejected" | "edited") => {
+  const handleSubmitDecision = async (decision: "approved" | "rejected" | "investigating" | "edited") => {
     setSubmittingDecision(true);
     try {
-      if (currentNarrativeId) {
+      if (currentNarrativeId && (decision === "approved" || decision === "rejected" || decision === "edited")) {
         await api.narrativeDecision(
           currentNarrativeId,
           decision,
@@ -227,7 +227,11 @@ export default function AlertDetailPage() {
       }
       await api.submitDecision(alertId, decision === "edited" ? "approved" : decision);
 
-      setDecisionSuccess(`Case status successfully updated to ${decision.toUpperCase()}.`);
+      setDecisionSuccess(
+        decision === "investigating"
+          ? "Case escalated to Senior Compliance Officer for extended review."
+          : `Case status successfully updated to ${decision.toUpperCase()}.`
+      );
       setTimeout(() => setDecisionSuccess(null), 5000);
       setIsEditingNarrative(false);
       await fetchAlert();
@@ -781,8 +785,9 @@ export default function AlertDetailPage() {
                         Dismiss Case
                       </button>
                       <button
-                        onClick={() => showAlert("Case file flagged for Senior Compliance Officer escalation.")}
-                        className="ref-btn ref-btn-secondary text-xs py-2"
+                        onClick={() => handleSubmitDecision("investigating")}
+                        disabled={submittingDecision}
+                        className="ref-btn ref-btn-secondary text-xs py-2 text-amber-400 hover:text-amber-300"
                       >
                         <Info size={12} />
                         Escalate

@@ -205,20 +205,36 @@ async def embed_text(
     # Store using raw SQL since SQLAlchemy doesn't natively support VECTOR type well
     emb_id = uuid4()
     src_id = UUID(source_id) if source_id else uuid4()
+    vec_str = f"[{','.join(str(v) for v in embedding)}]"
 
-    await db.execute(
-        text("""
-            INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
-            VALUES (:id, :source_type, :source_id, :content, :embedding::vector)
-        """),
-        {
-            "id": emb_id,
-            "source_type": source_type,
-            "source_id": src_id,
-            "content": content,
-            "embedding": f"[{','.join(str(v) for v in embedding)}]",
-        }
-    )
+    if settings.async_db_url.startswith("sqlite"):
+        await db.execute(
+            text("""
+                INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
+                VALUES (:id, :source_type, :source_id, :content, :embedding)
+            """),
+            {
+                "id": emb_id,
+                "source_type": source_type,
+                "source_id": src_id,
+                "content": content,
+                "embedding": vec_str,
+            }
+        )
+    else:
+        await db.execute(
+            text("""
+                INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
+                VALUES (:id, :source_type, :source_id, :content, CAST(:embedding AS vector))
+            """),
+            {
+                "id": emb_id,
+                "source_type": source_type,
+                "source_id": src_id,
+                "content": content,
+                "embedding": vec_str,
+            }
+        )
     await db.commit()
 
     return {"id": str(emb_id), "source_type": source_type, "dimensions": dim}
@@ -242,13 +258,14 @@ async def seed_typology_docs(db: AsyncSession = Depends(get_db)):
         embedding = compute_embedding(doc["content"])
         emb_id = str(uuid4())
         src_id = str(uuid4())
+        vec_str = f"[{','.join(str(v) for v in embedding)}]"
 
         params = {
             "id": emb_id,
             "source_type": doc["source_type"],
             "source_id": src_id,
             "content": doc["content"],
-            "embedding": f"[{','.join(str(v) for v in embedding)}]",
+            "embedding": vec_str,
         }
         if is_sqlite:
             await db.execute(
@@ -259,28 +276,17 @@ async def seed_typology_docs(db: AsyncSession = Depends(get_db)):
                 params
             )
         else:
-            try:
-                await db.execute(
-                    text("""
-                        INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
-                        VALUES (:id, :source_type, :source_id, :content, :embedding::vector)
-                    """),
-                    params
-                )
-            except Exception:
-                await db.rollback()
-                await db.execute(
-                    text("""
-                        INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
-                        VALUES (:id, :source_type, :source_id, :content, :embedding)
-                    """),
-                    params
-                )
+            await db.execute(
+                text("""
+                    INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
+                    VALUES (:id, :source_type, :source_id, :content, CAST(:embedding AS vector))
+                """),
+                params
+            )
         seeded += 1
 
     await db.commit()
     return {"status": "seeded", "count": seeded}
-
 
 
 @router.post("/retrieve", response_model=RAGRetrieveResponse)
@@ -303,9 +309,9 @@ async def retrieve(
             result = await db.execute(
                 text("""
                     SELECT id, source_type, content,
-                           1 - (embedding <=> :query_embedding::vector) AS similarity
+                           1 - (embedding <=> CAST(:query_embedding AS vector)) AS similarity
                     FROM case_embeddings
-                    ORDER BY embedding <=> :query_embedding::vector
+                    ORDER BY embedding <=> CAST(:query_embedding AS vector)
                     LIMIT :top_k
                 """),
                 {"query_embedding": emb_str, "top_k": payload.top_k}

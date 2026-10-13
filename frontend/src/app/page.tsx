@@ -140,12 +140,8 @@ export default function DashboardPage() {
       {/* ── Top Breadcrumb Header ─────────────────────────────────────────── */}
       <header className="h-14 border-b border-[#1e1e22] px-6 flex items-center justify-between shrink-0 bg-[#0c0c0e]">
         <div className="flex items-center gap-2.5 text-xs text-zinc-400">
-          <Link href="/" className="hover:text-zinc-200 flex items-center gap-1.5">
-            <PanelLeft size={16} className="text-zinc-500" />
-            <span>Dashboard</span>
-          </Link>
-          <span className="text-zinc-600">/</span>
-          <span className="text-zinc-100 font-semibold tracking-tight">Alerts Queue</span>
+          <PanelLeft size={16} className="text-zinc-500" />
+          <span className="text-zinc-100 font-semibold tracking-tight">Alerts Ledger</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -153,13 +149,6 @@ export default function DashboardPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             System Live
           </div>
-
-          <Link
-            href="/monitoring"
-            className="ref-btn ref-btn-secondary text-[11px] py-1 px-2.5"
-          >
-            Telemetry & Audit
-          </Link>
         </div>
       </header>
 

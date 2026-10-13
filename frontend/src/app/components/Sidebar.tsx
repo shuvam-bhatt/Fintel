@@ -2,48 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   LayoutDashboard,
-  ShieldAlert,
-  FileText,
-  Activity,
   Database,
-  Share2,
   CheckCircle2,
   Shield,
   HelpCircle,
-  Radio,
   ExternalLink,
-  Layers,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
 interface SidebarProps {
-  currentAlertId?: string;
   onSeedSuccess?: () => void;
 }
 
-export default function Sidebar({ currentAlertId, onSeedSuccess }: SidebarProps) {
+export default function Sidebar({ onSeedSuccess }: SidebarProps) {
   const pathname = usePathname();
   const [seeding, setSeeding] = useState(false);
   const [seedToast, setSeedToast] = useState<string | null>(null);
-  const [firstAlertId, setFirstAlertId] = useState<string | null>(null);
 
   const isDashboard = pathname === "/";
-  const isDossier = pathname.startsWith("/alerts");
-  const isMonitoring = pathname === "/monitoring";
-
-  // Fetch the first alert id so Active Dossier always points to a real alert
-  useEffect(() => {
-    api.getAlerts({ page: 1, page_size: 1 })
-      .then((res) => {
-        if (res.items && res.items.length > 0) {
-          setFirstAlertId(res.items[0].id);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const handleSeedData = async () => {
     setSeeding(true);
@@ -60,12 +39,6 @@ export default function Sidebar({ currentAlertId, onSeedSuccess }: SidebarProps)
       setSeeding(false);
     }
   };
-
-  const dossierHref = currentAlertId
-    ? `/alerts/${currentAlertId}`
-    : firstAlertId
-    ? `/alerts/${firstAlertId}`
-    : `/alerts/a2744e66-fbab-4ee4-9d1d-ab23ca057765`;
 
   return (
     <aside className="w-60 bg-[#111114] border-r border-[#222226] flex flex-col justify-between shrink-0 h-screen sticky top-0 text-sm select-none z-30">
@@ -109,36 +82,12 @@ export default function Sidebar({ currentAlertId, onSeedSuccess }: SidebarProps)
             <LayoutDashboard size={15} className={isDashboard ? "text-blue-400" : "text-zinc-400"} />
             <span>Alerts Ledger</span>
           </Link>
-
-          <Link
-            href={dossierHref}
-            className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition ${
-              isDossier
-                ? "bg-[#1f1f24] text-white font-semibold"
-                : "text-zinc-400 hover:text-zinc-200 hover:bg-[#18181c]"
-            }`}
-          >
-            <FileText size={15} className={isDossier ? "text-blue-400" : "text-zinc-400"} />
-            <span>Case Dossier</span>
-          </Link>
-
-          <Link
-            href="/monitoring"
-            className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition ${
-              isMonitoring
-                ? "bg-[#1f1f24] text-white font-semibold"
-                : "text-zinc-400 hover:text-zinc-200 hover:bg-[#18181c]"
-            }`}
-          >
-            <Activity size={15} className={isMonitoring ? "text-blue-400" : "text-zinc-400"} />
-            <span>Telemetry & Audit</span>
-          </Link>
         </div>
 
-        {/* Management & Actions */}
-        <div className="space-y-1 pt-1">
+        {/* Management & Tools */}
+        <div className="space-y-1 pt-2">
           <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-2.5 block mb-1">
-            Actions & Tools
+            Tools
           </span>
 
           <button
@@ -164,32 +113,6 @@ export default function Sidebar({ currentAlertId, onSeedSuccess }: SidebarProps)
             <div className="flex items-center gap-2.5">
               <HelpCircle size={15} className="text-zinc-400" />
               <span>API Swagger Docs</span>
-            </div>
-            <ExternalLink size={12} className="text-zinc-500" />
-          </a>
-
-          <a
-            href="http://localhost:8000/metrics"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-[#18181c] transition"
-          >
-            <div className="flex items-center gap-2.5">
-              <Radio size={15} className="text-emerald-400" />
-              <span>Prometheus /metrics</span>
-            </div>
-            <ExternalLink size={12} className="text-zinc-500" />
-          </a>
-
-          <a
-            href="http://localhost:3001"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-[#18181c] transition"
-          >
-            <div className="flex items-center gap-2.5">
-              <Activity size={15} className="text-amber-400" />
-              <span>Grafana Portal</span>
             </div>
             <ExternalLink size={12} className="text-zinc-500" />
           </a>
