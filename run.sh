@@ -20,6 +20,8 @@ cleanup() {
     pkill -9 -f "uvicorn" 2>/dev/null || true
     fuser -k -9 3000/tcp 2>/dev/null || true
     fuser -k -9 8000/tcp 2>/dev/null || true
+    fuser -k -9 5433/tcp 2>/dev/null || true
+    /usr/lib/postgresql/18/bin/pg_ctl -D "$PROJECT_ROOT/.pgdata" stop 2>/dev/null || true
     echo "Fintel stopped cleanly."
     exit 0
 }
