@@ -97,7 +97,6 @@ data/raw/*.csv
 data/raw/*.zip
 data/raw/*.tar.gz
 data/raw/*.gz
-!data/raw/README.md
 !data/raw/.gitkeep
 
 # ------------------------------------------------------------------------------
@@ -131,3 +130,14 @@ Thumbs.db
 *~
 *.sublime-project
 *.sublime-workspace
+
+# Next.js Auto-Generated Scratchpads
+frontend/AGENTS.md
+frontend/CLAUDE.md
+
+# ------------------------------------------------------------------------------
+# Faculty & Presentation Documentation (Local Only - Do Not Push to Git)
+# ------------------------------------------------------------------------------
+PROJECT_OVERVIEW_AND_TEAM_CONTRIBUTIONS.md
+PRESENTATION_SLIDES_CONTENT.md
+
