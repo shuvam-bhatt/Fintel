@@ -46,7 +46,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-Fintel}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-      DATABASE_URL: postgresql://Fintel:Fintel_dev_2026@db:5432/Fintel
+      DATABASE_URL: postgresql://${POSTGRES_USER:-Fintel}:${POSTGRES_PASSWORD:-Fintel_dev_2026}@db:5432/${POSTGRES_DB:-Fintel}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
       DATA_DIR: /app/data/generated
