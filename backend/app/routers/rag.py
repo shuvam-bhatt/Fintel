@@ -39,17 +39,23 @@ _USE_REAL_EMBEDDINGS = False
 
 
 def _get_embedding_model():
-    """Lazy-load sentence-transformers model."""
+    """Lazy-load embedding model. Uses deterministic fast embedding for instant performance."""
     global _embedding_model, _USE_REAL_EMBEDDINGS
     if _embedding_model is None:
-        try:
-            from sentence_transformers import SentenceTransformer
-            _embedding_model = SentenceTransformer(settings.embedding_model)
-            _USE_REAL_EMBEDDINGS = True
-        except ImportError:
+        import os
+        if os.environ.get("USE_REAL_EMBEDDINGS", "false").lower() in ("true", "1"):
+            try:
+                from sentence_transformers import SentenceTransformer
+                _embedding_model = SentenceTransformer(settings.embedding_model)
+                _USE_REAL_EMBEDDINGS = True
+            except Exception:
+                _embedding_model = "fallback"
+                _USE_REAL_EMBEDDINGS = False
+        else:
             _embedding_model = "fallback"
             _USE_REAL_EMBEDDINGS = False
     return _embedding_model
+
 
 
 def compute_embedding(text: str) -> list[float]:
@@ -230,10 +236,12 @@ async def seed_typology_docs(db: AsyncSession = Depends(get_db)):
         return {"status": "already_seeded", "count": existing}
 
     seeded = 0
+    is_sqlite = settings.async_db_url.startswith("sqlite")
+
     for doc in TYPOLOGY_DOCS:
         embedding = compute_embedding(doc["content"])
-        emb_id = uuid4()
-        src_id = uuid4()
+        emb_id = str(uuid4())
+        src_id = str(uuid4())
 
         params = {
             "id": emb_id,
@@ -242,16 +250,7 @@ async def seed_typology_docs(db: AsyncSession = Depends(get_db)):
             "content": doc["content"],
             "embedding": f"[{','.join(str(v) for v in embedding)}]",
         }
-        try:
-            await db.execute(
-                text("""
-                    INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
-                    VALUES (:id, :source_type, :source_id, :content, :embedding::vector)
-                """),
-                params
-            )
-        except Exception:
-            await db.rollback()
+        if is_sqlite:
             await db.execute(
                 text("""
                     INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
@@ -259,6 +258,24 @@ async def seed_typology_docs(db: AsyncSession = Depends(get_db)):
                 """),
                 params
             )
+        else:
+            try:
+                await db.execute(
+                    text("""
+                        INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
+                        VALUES (:id, :source_type, :source_id, :content, :embedding::vector)
+                    """),
+                    params
+                )
+            except Exception:
+                await db.rollback()
+                await db.execute(
+                    text("""
+                        INSERT INTO case_embeddings (id, source_type, source_id, content, embedding)
+                        VALUES (:id, :source_type, :source_id, :content, :embedding)
+                    """),
+                    params
+                )
         seeded += 1
 
     await db.commit()
@@ -278,74 +295,76 @@ async def retrieve(
     Output: {similar_cases: [...]}
     """
     query_embedding = compute_embedding(payload.query_text)
-    emb_str = f"[{','.join(str(v) for v in query_embedding)}]"
+    is_sqlite = settings.async_db_url.startswith("sqlite")
 
-    # Try pgvector cosine similarity search
-    try:
-        result = await db.execute(
-            text("""
-                SELECT id, source_type, content,
-                       1 - (embedding <=> :query_embedding::vector) AS similarity
-                FROM case_embeddings
-                ORDER BY embedding <=> :query_embedding::vector
-                LIMIT :top_k
-            """),
-            {"query_embedding": emb_str, "top_k": payload.top_k}
-        )
-        rows = result.fetchall()
-
-        similar_cases = [
-            SimilarCase(
-                id=row[0],
-                source_type=row[1],
-                content=row[2],
-                similarity=round(float(row[3]), 4),
+    if not is_sqlite:
+        emb_str = f"[{','.join(str(v) for v in query_embedding)}]"
+        try:
+            result = await db.execute(
+                text("""
+                    SELECT id, source_type, content,
+                           1 - (embedding <=> :query_embedding::vector) AS similarity
+                    FROM case_embeddings
+                    ORDER BY embedding <=> :query_embedding::vector
+                    LIMIT :top_k
+                """),
+                {"query_embedding": emb_str, "top_k": payload.top_k}
             )
-            for row in rows
-        ]
-    except Exception:
-        await db.rollback()
-        # Fallback: if pgvector isn't available, do in-memory cosine search
-        result = await db.execute(text("SELECT id, source_type, content FROM case_embeddings"))
-        rows = result.fetchall()
-
-        if not rows:
-            scored = []
-            for doc in TYPOLOGY_DOCS:
-                doc_emb = compute_embedding(doc["content"])
-                sim = cosine_similarity(query_embedding, doc_emb)
-                scored.append(({"id": uuid4(), "source_type": doc["source_type"], "content": doc["content"]}, sim))
-            scored.sort(key=lambda x: x[1], reverse=True)
+            rows = result.fetchall()
             return RAGRetrieveResponse(
                 similar_cases=[
                     SimilarCase(
-                        id=str(d["id"]),
-                        source_type=d["source_type"],
-                        content=d["content"],
-                        similarity=round(s, 4),
+                        id=str(row[0]),
+                        source_type=row[1],
+                        content=row[2],
+                        similarity=round(float(row[3]), 4),
                     )
-                    for d, s in scored[:payload.top_k]
+                    for row in rows
                 ]
             )
+        except Exception:
+            await db.rollback()
 
+    # In-memory cosine search (SQLite or when pgvector unavailable)
+    result = await db.execute(text("SELECT id, source_type, content FROM case_embeddings"))
+    rows = result.fetchall()
 
-        # Compute similarities in memory
+    if not rows:
         scored = []
-        for row in rows:
-            # Re-embed the stored content for comparison
-            doc_emb = compute_embedding(row[2])
+        for doc in TYPOLOGY_DOCS:
+            doc_emb = compute_embedding(doc["content"])
             sim = cosine_similarity(query_embedding, doc_emb)
-            scored.append((row, sim))
-
+            scored.append(({"id": str(uuid4()), "source_type": doc["source_type"], "content": doc["content"]}, sim))
         scored.sort(key=lambda x: x[1], reverse=True)
-        similar_cases = [
-            SimilarCase(
-                id=row[0],
-                source_type=row[1],
-                content=row[2],
-                similarity=round(sim, 4),
-            )
-            for row, sim in scored[:payload.top_k]
-        ]
+        return RAGRetrieveResponse(
+            similar_cases=[
+                SimilarCase(
+                    id=str(d["id"]),
+                    source_type=d["source_type"],
+                    content=d["content"],
+                    similarity=round(s, 4),
+                )
+                for d, s in scored[:payload.top_k]
+            ]
+        )
+
+    # Compute similarities in memory for stored rows
+    scored = []
+    for row in rows:
+        doc_emb = compute_embedding(row[2])
+        sim = cosine_similarity(query_embedding, doc_emb)
+        scored.append((row, sim))
+
+    scored.sort(key=lambda x: x[1], reverse=True)
+    similar_cases = [
+        SimilarCase(
+            id=str(row[0]),
+            source_type=row[1],
+            content=row[2],
+            similarity=round(sim, 4),
+        )
+        for row, sim in scored[:payload.top_k]
+    ]
 
     return RAGRetrieveResponse(similar_cases=similar_cases)
+

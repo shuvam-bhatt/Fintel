@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Sidebar from "./components/Sidebar";
 
 export const metadata: Metadata = {
-  title: "Fintel | FIU AML Investigation & SAR E-Filing Portal",
+  title: "Fintel | Enterprise AML Investigation & SAR Portal",
   description:
-    "Official Financial Intelligence Unit (FIU) Case Dossier, Multi-hop Knowledge Graph, and SAR Part V Narrative Filing System",
+    "Official Financial Intelligence Unit Case Dossier, Multi-hop Knowledge Graph, and SAR Part V Narrative Filing System",
 };
 
 export default function RootLayout({
@@ -26,7 +27,12 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased bg-[#0c0c0e] text-[#f4f4f5] flex min-h-screen selection:bg-blue-600 selection:text-white">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }

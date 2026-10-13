@@ -99,10 +99,9 @@ async def seed_alerts(
                         INSERT INTO alerts (id, raw_text, transaction_id, account_id, 
                                           amount, currency, timestamp, risk_score, typology, status)
                         VALUES (:id, :raw_text, :transaction_id, :account_id,
-                                :amount, :currency, CAST(:timestamp AS timestamptz), :risk_score, :typology, :status)
+                                :amount, :currency, :timestamp, :risk_score, :typology, :status)
                         ON CONFLICT (id) DO NOTHING
                     """),
-
                     record,
                 )
             total_loaded += len(batch)
@@ -135,7 +134,7 @@ async def seed_alerts(
                         INSERT INTO alerts (id, raw_text, transaction_id, account_id,
                                           amount, currency, timestamp, risk_score, typology, status)
                         VALUES (:id, :raw_text, :transaction_id, :account_id,
-                                :amount, :currency, CAST(:timestamp AS timestamptz), :risk_score, :typology, :status)
+                                :amount, :currency, :timestamp, :risk_score, :typology, :status)
                         ON CONFLICT (id) DO NOTHING
                     """),
                     record,

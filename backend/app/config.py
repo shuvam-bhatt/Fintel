@@ -3,6 +3,8 @@ Fintel Backend — Configuration
 Centralized settings loaded from environment variables.
 """
 
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -22,6 +24,7 @@ class Settings(BaseSettings):
     postgres_host: str = "localhost"
     postgres_port: int = 5433
     database_url: str = ""
+    use_sqlite: bool = True  # Zero-config default for local environments without PostgreSQL
     
     # LLM
     llm_api_key: str = ""
@@ -47,6 +50,9 @@ class Settings(BaseSettings):
     def db_url(self) -> str:
         if self.database_url:
             return self.database_url
+        if self.use_sqlite:
+            db_path = (Path(__file__).resolve().parent.parent / "fintel.db").as_posix()
+            return f"sqlite:///{db_path}"
         return (
             f"postgresql://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
@@ -54,9 +60,15 @@ class Settings(BaseSettings):
     
     @property
     def async_db_url(self) -> str:
-        return self.db_url.replace("postgresql://", "postgresql+asyncpg://")
+        url = self.db_url
+        if url.startswith("sqlite:///"):
+            return url.replace("sqlite:///", "sqlite+aiosqlite:///")
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://")
+        return url
 
 
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
+
